@@ -4,6 +4,11 @@
 --
 -- Apply with the Supabase MCP `apply_migration` tool, or `supabase db push`
 -- once the project exists. Written to be idempotent-ish for local dev re-runs.
+--
+-- NOTE: the app has no login yet, so all 3 tables grant full CRUD to the
+-- `anon` role (temporary — see the commented-out `authenticated`-only
+-- policies under each table). `created_by` will just stay null until auth
+-- ships; swap the anon policies back out at that point.
 
 create extension if not exists pgcrypto;
 
@@ -69,22 +74,37 @@ create index if not exists ems_cases_severity_idx on public.ems_cases (severity)
 
 alter table public.ems_cases enable row level security;
 
-create policy "ems_cases: authenticated read" on public.ems_cases
-  for select to authenticated using (true);
+-- TEMP: app has no login yet, so anon (public API key) is granted full CRUD.
+-- Once auth ships, drop these 4 policies and re-enable the authenticated-only
+-- ones (kept below, commented out) instead.
+create policy "ems_cases: anon read" on public.ems_cases
+  for select to anon, authenticated using (true);
 
-create policy "ems_cases: authenticated insert" on public.ems_cases
-  for insert to authenticated with check (true);
+create policy "ems_cases: anon insert" on public.ems_cases
+  for insert to anon, authenticated with check (true);
 
-create policy "ems_cases: authenticated update own or admin" on public.ems_cases
-  for update to authenticated using (
-    created_by = auth.uid()
-    or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-  );
+create policy "ems_cases: anon update" on public.ems_cases
+  for update to anon, authenticated using (true);
 
-create policy "ems_cases: admin delete" on public.ems_cases
-  for delete to authenticated using (
-    exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-  );
+create policy "ems_cases: anon delete" on public.ems_cases
+  for delete to anon, authenticated using (true);
+
+-- create policy "ems_cases: authenticated read" on public.ems_cases
+--   for select to authenticated using (true);
+--
+-- create policy "ems_cases: authenticated insert" on public.ems_cases
+--   for insert to authenticated with check (true);
+--
+-- create policy "ems_cases: authenticated update own or admin" on public.ems_cases
+--   for update to authenticated using (
+--     created_by = auth.uid()
+--     or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
+--   );
+--
+-- create policy "ems_cases: admin delete" on public.ems_cases
+--   for delete to authenticated using (
+--     exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
+--   );
 
 -- ---------------------------------------------------------------------------
 -- 2) Refer In / Out — ทะเบียนส่งต่อผู้ป่วยระหว่างโรงพยาบาล
@@ -121,22 +141,35 @@ create index if not exists refer_records_direction_idx on public.refer_records (
 
 alter table public.refer_records enable row level security;
 
-create policy "refer_records: authenticated read" on public.refer_records
-  for select to authenticated using (true);
+-- TEMP: same anon-open policy as ems_cases — see note above.
+create policy "refer_records: anon read" on public.refer_records
+  for select to anon, authenticated using (true);
 
-create policy "refer_records: authenticated insert" on public.refer_records
-  for insert to authenticated with check (true);
+create policy "refer_records: anon insert" on public.refer_records
+  for insert to anon, authenticated with check (true);
 
-create policy "refer_records: authenticated update own or admin" on public.refer_records
-  for update to authenticated using (
-    created_by = auth.uid()
-    or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-  );
+create policy "refer_records: anon update" on public.refer_records
+  for update to anon, authenticated using (true);
 
-create policy "refer_records: admin delete" on public.refer_records
-  for delete to authenticated using (
-    exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-  );
+create policy "refer_records: anon delete" on public.refer_records
+  for delete to anon, authenticated using (true);
+
+-- create policy "refer_records: authenticated read" on public.refer_records
+--   for select to authenticated using (true);
+--
+-- create policy "refer_records: authenticated insert" on public.refer_records
+--   for insert to authenticated with check (true);
+--
+-- create policy "refer_records: authenticated update own or admin" on public.refer_records
+--   for update to authenticated using (
+--     created_by = auth.uid()
+--     or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
+--   );
+--
+-- create policy "refer_records: admin delete" on public.refer_records
+--   for delete to authenticated using (
+--     exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
+--   );
 
 -- ---------------------------------------------------------------------------
 -- 3) Triage Summary — สรุปความถูกต้องของการคัดกรองรายเดือน/รายสี
@@ -163,22 +196,35 @@ create index if not exists triage_monthly_month_idx on public.triage_monthly (mo
 
 alter table public.triage_monthly enable row level security;
 
-create policy "triage_monthly: authenticated read" on public.triage_monthly
-  for select to authenticated using (true);
+-- TEMP: same anon-open policy as ems_cases — see note above.
+create policy "triage_monthly: anon read" on public.triage_monthly
+  for select to anon, authenticated using (true);
 
-create policy "triage_monthly: authenticated insert" on public.triage_monthly
-  for insert to authenticated with check (true);
+create policy "triage_monthly: anon insert" on public.triage_monthly
+  for insert to anon, authenticated with check (true);
 
-create policy "triage_monthly: authenticated update own or admin" on public.triage_monthly
-  for update to authenticated using (
-    created_by = auth.uid()
-    or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-  );
+create policy "triage_monthly: anon update" on public.triage_monthly
+  for update to anon, authenticated using (true);
 
-create policy "triage_monthly: admin delete" on public.triage_monthly
-  for delete to authenticated using (
-    exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-  );
+create policy "triage_monthly: anon delete" on public.triage_monthly
+  for delete to anon, authenticated using (true);
+
+-- create policy "triage_monthly: authenticated read" on public.triage_monthly
+--   for select to authenticated using (true);
+--
+-- create policy "triage_monthly: authenticated insert" on public.triage_monthly
+--   for insert to authenticated with check (true);
+--
+-- create policy "triage_monthly: authenticated update own or admin" on public.triage_monthly
+--   for update to authenticated using (
+--     created_by = auth.uid()
+--     or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
+--   );
+--
+-- create policy "triage_monthly: admin delete" on public.triage_monthly
+--   for delete to authenticated using (
+--     exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
+--   );
 
 -- ---------------------------------------------------------------------------
 -- updated_at auto-touch trigger

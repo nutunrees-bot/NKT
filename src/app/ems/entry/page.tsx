@@ -72,40 +72,58 @@ function labelFor<T extends { value: string; label: string }>(
 export default function EmsEntryPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [recent, setRecent] = useState<EmsCase[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   const [justSaved, setJustSaved] = useState(false);
 
   useEffect(() => {
-    setRecent(listEmsCases());
+    listEmsCases()
+      .then(setRecent)
+      .catch((err) => setError(err.message ?? "โหลดข้อมูลไม่สำเร็จ"))
+      .finally(() => setLoading(false));
   }, []);
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    addEmsCase({
-      incidentDate: form.incidentDate,
-      incidentTime: form.incidentTime,
-      shift: form.shift,
-      channel: form.channel,
-      category: form.category,
-      severity: form.severity,
-      isTrauma: form.isTrauma,
-      location: form.location,
-      patientInitials: form.patientInitials,
-      patientHn: form.patientHn,
-      patientAge: form.patientAge ? Number(form.patientAge) : null,
-      outcome: form.outcome,
-      noIncident: form.noIncident,
-      noIncidentReason: form.noIncidentReason,
-      notes: form.notes,
-    });
-    setRecent(listEmsCases());
-    setForm({ ...EMPTY_FORM, incidentDate: form.incidentDate });
-    setJustSaved(true);
-    setTimeout(() => setJustSaved(false), 2500);
+    setSaving(true);
+    setError("");
+    try {
+      await addEmsCase({
+        incidentDate: form.incidentDate,
+        incidentTime: form.incidentTime,
+        shift: form.shift,
+        channel: form.channel,
+        category: form.category,
+        severity: form.severity,
+        isTrauma: form.isTrauma,
+        location: form.location,
+        patientInitials: form.patientInitials,
+        patientHn: form.patientHn,
+        patientAge: form.patientAge ? Number(form.patientAge) : null,
+        outcome: form.outcome,
+        noIncident: form.noIncident,
+        noIncidentReason: form.noIncidentReason,
+        notes: form.notes,
+      });
+      setRecent(await listEmsCases());
+      setForm({ ...EMPTY_FORM, incidentDate: form.incidentDate });
+      setJustSaved(true);
+      setTimeout(() => setJustSaved(false), 2500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "บันทึกไม่สำเร็จ");
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function handleDelete(id: string) {
-    removeEmsCase(id);
-    setRecent(listEmsCases());
+  async function handleDelete(id: string) {
+    try {
+      await removeEmsCase(id);
+      setRecent(await listEmsCases());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "ลบไม่สำเร็จ");
+    }
   }
 
   return (
@@ -122,10 +140,15 @@ export default function EmsEntryPage() {
           บันทึกเคส EMS ใหม่
         </h2>
         <p className="text-xs text-(--text-secondary)">
-          บันทึกไว้ในเครื่องนี้ก่อน (ยังไม่เชื่อมฐานข้อมูลกลาง) —
-          ข้อมูลจะย้ายเข้า Supabase อัตโนมัติเมื่อเชื่อมต่อเสร็จ
+          บันทึกเข้าฐานข้อมูลกลาง (Supabase) โดยตรง — ทุกคนที่เข้าเว็บนี้เห็นข้อมูลชุดเดียวกัน
         </p>
       </div>
+
+      {error && (
+        <div className="mb-4 rounded-lg border border-(--status-critical) bg-(--status-critical)/10 px-3 py-2 text-xs font-medium text-(--status-critical)">
+          {error}
+        </div>
+      )}
 
       <form
         onSubmit={handleSubmit}
@@ -325,9 +348,10 @@ export default function EmsEntryPage() {
         <div className="flex items-center gap-3 pt-1">
           <button
             type="submit"
-            className="rounded-lg bg-(--brand-navy) px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+            disabled={saving}
+            className="rounded-lg bg-(--brand-navy) px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60"
           >
-            บันทึกเคส
+            {saving ? "กำลังบันทึก..." : "บันทึกเคส"}
           </button>
           {justSaved && (
             <span className="flex items-center gap-1.5 text-sm font-medium text-(--status-good)">
@@ -337,7 +361,11 @@ export default function EmsEntryPage() {
         </div>
       </form>
 
-      {recent.length > 0 && (
+      {loading && (
+        <p className="mt-6 text-xs text-(--text-muted)">กำลังโหลดข้อมูล...</p>
+      )}
+
+      {!loading && recent.length > 0 && (
         <div className="mt-6">
           <h3 className="mb-2 text-sm font-bold text-(--text-primary)">
             เคสที่บันทึกล่าสุด ({recent.length})
