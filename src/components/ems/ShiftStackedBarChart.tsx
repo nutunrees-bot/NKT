@@ -18,6 +18,22 @@ const SERIES = [
   { key: "night", name: "เวรดึก (24:00-08:00)", color: "var(--text-muted)" },
 ] as const;
 
+function ShiftLegend() {
+  return (
+    <ul className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-(--text-secondary)">
+      {SERIES.map((s) => (
+        <li key={s.key} className="flex items-center gap-1.5">
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{ backgroundColor: s.color }}
+          />
+          {s.name}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function ChartTooltip({
   active,
   payload,
@@ -81,16 +97,7 @@ export default function ShiftStackedBarChart({
             width={36}
           />
           <Tooltip content={<ChartTooltip />} cursor={{ fill: "var(--gridline)", opacity: 0.4 }} />
-          <Legend
-            wrapperStyle={{ fontSize: 11, color: "var(--text-secondary)" }}
-            iconType="circle"
-            iconSize={8}
-            payload={SERIES.map((s) => ({
-              value: s.name,
-              type: "circle",
-              color: s.color,
-            }))}
-          />
+          <Legend content={<ShiftLegend />} />
           {SERIES.map((s, i) => (
             <Bar
               key={s.key}

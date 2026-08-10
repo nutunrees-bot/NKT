@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Ambulance, ArrowLeftRight, HeartPulse, UploadCloud, XCircle } from "lucide-react";
+import Link from "next/link";
+import { Ambulance, ArrowLeftRight, HeartPulse, PlusCircle, UploadCloud, XCircle } from "lucide-react";
 import FilterSidebar from "@/components/ems/FilterSidebar";
 import KpiCard from "@/components/ems/KpiCard";
 import ShiftStackedBarChart from "@/components/ems/ShiftStackedBarChart";
@@ -79,14 +80,23 @@ export default function EmsDashboardPage() {
             รอเชื่อมฐานข้อมูลจริง
           </p>
         </div>
-        <button
-          type="button"
-          title="เร็วๆ นี้: อัปโหลด CSV จริงเพื่อแทนที่ข้อมูลตัวอย่าง"
-          className="flex items-center gap-2 rounded-lg bg-(--brand-navy) px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
-        >
-          <UploadCloud size={15} />
-          อัปโหลดข้อมูล CSV จริง
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/ems/entry"
+            className="flex items-center gap-2 rounded-lg border border-(--brand-navy) px-3.5 py-2 text-xs font-semibold text-(--brand-navy) transition-colors hover:bg-(--brand-navy)/5"
+          >
+            <PlusCircle size={15} />
+            บันทึกเคสใหม่
+          </Link>
+          <button
+            type="button"
+            title="เร็วๆ นี้: อัปโหลด CSV จริงเพื่อแทนที่ข้อมูลตัวอย่าง"
+            className="flex items-center gap-2 rounded-lg bg-(--brand-navy) px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+          >
+            <UploadCloud size={15} />
+            อัปโหลดข้อมูล CSV จริง
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr]">
