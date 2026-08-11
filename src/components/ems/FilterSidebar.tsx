@@ -164,6 +164,7 @@ export default function FilterSidebar({
           รพ.สมเด็จพระยุพราชนครไทย
         </p>
         <p>EMSNKT Command Center v1</p>
+        <p>Developed by Nutunree Seesai</p>
       </div>
     </aside>
   );
