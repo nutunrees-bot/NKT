@@ -22,7 +22,10 @@ export async function loginAction(
     p_password: password,
   });
 
-  if (error) return { error: "ระบบขัดข้อง กรุณาลองใหม่อีกครั้ง" };
+  if (error) {
+    console.error("[login] verify_account failed:", error);
+    return { error: "ระบบขัดข้อง กรุณาลองใหม่อีกครั้ง" };
+  }
 
   if (!accountId) {
     await db().from("login_events").insert({ code, action: "failed" });
