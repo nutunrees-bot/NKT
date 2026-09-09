@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   title: "NKT Rescue",
   description:
     "ระบบบันทึกปฏิบัติการฉุกเฉินและการส่งต่อผู้ป่วย ER โรงพยาบาลสมเด็จพระยุพราชนครไทย",
+  // เปิดจากไอคอนบนหน้าจอโฮมแล้วให้เต็มจอ ไม่มีแถบที่อยู่เว็บ
+  appleWebApp: { capable: true, title: "NKT Rescue", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
