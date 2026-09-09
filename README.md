@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NKT Rescue
 
-## Getting Started
+ระบบบันทึกปฏิบัติการการแพทย์ฉุกเฉิน (EMS) และการส่งต่อผู้ป่วย (REFER)
+ของ ER โรงพยาบาลสมเด็จพระยุพราชนครไทย
 
-First, run the development server:
+ใช้งานจริง: https://nkt-sigma.vercel.app
+
+## เริ่มต้น
 
 ```bash
+npm install
+cp .env.example .env.local   # แล้วเติมค่าจริงลงไป
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+เปิด http://localhost:3000 แล้วเข้าสู่ระบบด้วยรหัสเจ้าหน้าที่
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> ต้องมี `SUPABASE_SERVICE_ROLE_KEY` ใน `.env.local` ก่อน ไม่งั้นจะขึ้น error ทุกหน้า
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## เอกสาร
 
-## Learn More
+| ไฟล์ | เนื้อหา |
+|---|---|
+| [docs/handover.md](docs/handover.md) | **เริ่มอ่านที่นี่** — วิธีรับมอบโปรเจค ตั้งเครื่อง และงานที่ยังค้าง |
+| [docs/deploy.md](docs/deploy.md) | วิธี deploy ขึ้น Vercel และตัวแปรที่ต้องตั้ง |
+| [docs/legacy-app-spec.md](docs/legacy-app-spec.md) | สเปกหน้าจอของระบบ Google Apps Script เดิม |
+| [docs/legacy-backend-spec.md](docs/legacy-backend-spec.md) | ผังคอลัมน์ชีตเดิม + ปัญหาที่ระบบใหม่แก้ไปแล้ว |
+| [CLAUDE.md](CLAUDE.md) | กติกาการแก้โค้ดและจุดที่ผิดง่าย |
 
-To learn more about Next.js, take a look at the following resources:
+## สถาปัตยกรรม
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Next.js 16 (App Router) + Supabase (Postgres + Storage) · deploy บน Vercel
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+เข้าสู่ระบบด้วยรหัสเจ้าหน้าที่ ตรวจรหัสผ่าน (bcrypt) ในฐานข้อมูล แล้ววาง session
+cookie แบบ httpOnly · ฐานข้อมูลเปิด RLS โดยไม่มี policy ให้ `anon` เลย
+ทุกการอ่าน/เขียนจึงเกิดฝั่งเซิร์ฟเวอร์เท่านั้น เบราว์เซอร์ไม่เคยถือคีย์ที่แตะข้อมูลได้
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+โครงฐานข้อมูลอยู่ที่ [supabase/v2/](supabase/v2/)
