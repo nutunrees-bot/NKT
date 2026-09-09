@@ -14,34 +14,52 @@
 create extension if not exists pgcrypto;
 
 -- ---------------------------------------------------------------------------
--- เจ้าหน้าที่ + การเข้าระบบ
+-- บัญชีเข้าระบบ (ระบบเดิมคือรหัสกลาง ERNKT001–ERNKT016 ไม่ผูกกับชื่อคน)
 -- ---------------------------------------------------------------------------
-create table public.staff (
+create table public.accounts (
   id            uuid primary key default gen_random_uuid(),
   code          text not null unique,            -- รหัสที่ใช้ login (พิมพ์ใหญ่)
   password_hash text not null,                   -- bcrypt ห้ามเก็บรหัสดิบ
-  full_name     text not null,
-  -- rn = พยาบาล, aemt = เวชกิจฉุกเฉิน, assistant = ผู้ช่วย PN/NA, driver = พขร.
-  roles         text[] not null default '{}',
+  display_name  text,                            -- ใส่ทีหลังได้ถ้าจะผูกรหัสกับคน
   is_admin      boolean not null default false,
   is_active     boolean not null default true,
-  sort_order    int not null default 0,
   created_at    timestamptz not null default now()
 );
-create index staff_active_idx on public.staff (is_active, sort_order);
-
-comment on column public.staff.roles is
-  'ใช้กรองรายชื่อในฟอร์ม: ผู้ให้บริการ 1/2 = rn+aemt, ผู้ช่วย = assistant, พขร. = driver, ผู้ประเมิน = rn เท่านั้น';
 
 create table public.sessions (
   id         uuid primary key default gen_random_uuid(),
-  staff_id   uuid not null references public.staff (id) on delete cascade,
+  account_id uuid not null references public.accounts (id) on delete cascade,
   token_hash text not null unique,               -- เก็บ hash ของ token ไม่เก็บตัว token
   created_at timestamptz not null default now(),
   expires_at timestamptz not null,
   revoked_at timestamptz
 );
-create index sessions_staff_idx on public.sessions (staff_id);
+create index sessions_account_idx on public.sessions (account_id);
+
+-- แทนชีต 'บันทึกเข้าระบบ' ของเดิม
+create table public.login_events (
+  id         uuid primary key default gen_random_uuid(),
+  code       text not null,
+  action     text not null check (action in ('login','logout','failed')),
+  at         timestamptz not null default now()
+);
+create index login_events_at_idx on public.login_events (at desc);
+
+-- ---------------------------------------------------------------------------
+-- รายชื่อเจ้าหน้าที่สำหรับดรอปดาวน์ในฟอร์ม (คนละเรื่องกับบัญชี login)
+-- ---------------------------------------------------------------------------
+create table public.staff (
+  id         uuid primary key default gen_random_uuid(),
+  full_name  text not null unique,
+  -- rn = พยาบาล, aemt = เวชกิจฉุกเฉิน, assistant = ผู้ช่วย PN/NA, driver = พขร.
+  roles      text[] not null default '{}',
+  is_active  boolean not null default true,
+  sort_order int not null default 0
+);
+create index staff_active_idx on public.staff (is_active, sort_order);
+
+comment on column public.staff.roles is
+  'ใช้กรองรายชื่อในฟอร์ม: ผู้ให้บริการ 1/2 = rn+aemt, ผู้ช่วย = assistant, พขร. = driver, ผู้ประเมิน = rn เท่านั้น';
 
 -- ---------------------------------------------------------------------------
 -- ตารางอ้างอิง (ของเดิม hard-code ในโค้ด — ย้ายมาให้แก้ได้โดยไม่ต้อง deploy)
@@ -121,6 +139,7 @@ create table public.ems_cases (
   nationality_detail  text,
   insurance_right     text check (insurance_right in
     ('บัตรทอง','ข้าราชการ','ประกันสังคม','แรงงานต่างด้าวขึ้นทะเบียน','ไม่มีหลักประกัน')),
+  symptoms            text,  -- "อาการ" — ชีตเดิมมีคอลัมน์นี้แต่ฟอร์มไม่เคยส่งค่ามา (ของใหม่ต้องมีช่องกรอก)
   dx                  text,
 
   -- Vital signs ชุดแรก (ชุดประเมินซ้ำอยู่ตาราง ems_vitals) ---------------------
@@ -182,8 +201,8 @@ create table public.ems_cases (
   outcome           text check (outcome in ('D/C','Admit','Refer','Death')),
   refer_hospital    text,                        -- กรอกเมื่อ outcome = 'Refer'
 
-  created_by uuid references public.staff (id),
-  updated_by uuid references public.staff (id),
+  created_by uuid references public.accounts (id),
+  updated_by uuid references public.accounts (id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
 
@@ -235,8 +254,8 @@ create table public.refer_cases (
     'ระดับฉุกเฉิน (ฉุกเฉินสีเหลือง)',
     'ระดับเร่งด่วน (ฉุกเฉินสีเขียว)',
     'ระดับไม่เร่งด่วน (ปกติ)')),
-  created_by uuid references public.staff (id),
-  updated_by uuid references public.staff (id),
+  created_by uuid references public.accounts (id),
+  updated_by uuid references public.accounts (id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -268,8 +287,10 @@ create trigger refer_cases_touch before update on public.refer_cases
 -- RLS: เปิดทุกตาราง และตั้งใจไม่สร้าง policy → anon/authenticated เข้าไม่ได้เลย
 -- แอปเข้าถึงผ่าน service_role ฝั่งเซิร์ฟเวอร์เท่านั้น (bypass RLS)
 -- ---------------------------------------------------------------------------
-alter table public.staff        enable row level security;
+alter table public.accounts     enable row level security;
 alter table public.sessions     enable row level security;
+alter table public.login_events enable row level security;
+alter table public.staff        enable row level security;
 alter table public.hospitals    enable row level security;
 alter table public.subdistricts enable row level security;
 alter table public.ems_cases    enable row level security;
