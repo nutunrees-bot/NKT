@@ -218,6 +218,34 @@ async function moveDriveImage(
   return path;
 }
 
+/**
+ * ล้างข้อมูลเคสทั้งหมดก่อนนำเข้าใหม่ — ใช้เฉพาะตอนย้ายระบบ
+ * ต้นฉบับยังอยู่ใน Google Sheet ดึงกลับมาได้เสมอ
+ * (ems_vitals ถูกลบตามด้วย on delete cascade)
+ */
+export async function resetCases() {
+  const ems = await db().from("ems_cases").delete().not("id", "is", null);
+  if (ems.error) throw new Error(`ล้าง ems_cases ไม่สำเร็จ: ${ems.error.message}`);
+
+  const refer = await db().from("refer_cases").delete().not("id", "is", null);
+  if (refer.error)
+    throw new Error(`ล้าง refer_cases ไม่สำเร็จ: ${refer.error.message}`);
+
+  // ไฟล์แนบที่นำเข้ามารอบก่อน — ลบทิ้งด้วย ไม่งั้นค้างเป็นขยะใน bucket
+  const { data: folders } = await db()
+    .storage.from(ATTACHMENT_BUCKET)
+    .list("legacy");
+  for (const folder of folders ?? []) {
+    const { data: files } = await db()
+      .storage.from(ATTACHMENT_BUCKET)
+      .list(`legacy/${folder.name}`);
+    const paths = (files ?? []).map((f) => `legacy/${folder.name}/${f.name}`);
+    if (paths.length) {
+      await db().storage.from(ATTACHMENT_BUCKET).remove(paths);
+    }
+  }
+}
+
 /* ------------------------------------------------------------------ import */
 
 export async function importLegacySheet(
@@ -299,8 +327,16 @@ async function importEmsTab(
 
     const dropped: string[] = [];
     const caseKey = `${tab}-${line}`;
-    /** อ่านคอลัมน์โดยชดเชยตำแหน่งของชีตรุ่นเก่า */
-    const c = (i: number) => r[legacyLayout && i >= 34 ? i - 1 : i];
+    /**
+     * อ่านคอลัมน์โดยชดเชยตำแหน่งของชีตรุ่นเก่า
+     * ช่อง DX (34) ไม่มีอยู่จริงในรุ่นเก่า ต้องคืนค่าว่าง ไม่ใช่เลื่อนไปหยิบ
+     * ช่อง "อาการ" (33) มาแทน · ตั้งแต่ 35 ขึ้นไปจึงเลื่อนซ้าย 1 ช่อง
+     */
+    const c = (i: number) => {
+      if (!legacyLayout) return r[i];
+      if (i === 34) return undefined;
+      return i > 34 ? r[i - 1] : r[i];
+    };
 
     const record: Record<string, unknown> = {
       incident_date: date,
