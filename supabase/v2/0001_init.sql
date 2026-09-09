@@ -263,6 +263,17 @@ create index refer_cases_date_idx on public.refer_cases (refer_date desc);
 create index refer_cases_hn_idx   on public.refer_cases (patient_hn);
 
 -- ---------------------------------------------------------------------------
+-- ตรวจรหัสผ่าน — เทียบ bcrypt ในฐานข้อมูล แอปไม่ต้องเห็น hash
+-- ---------------------------------------------------------------------------
+create or replace function public.verify_account(p_code text, p_password text)
+returns uuid
+language sql
+as 'select id from public.accounts
+     where code = upper(p_code)
+       and is_active
+       and password_hash = crypt(p_password, password_hash)';
+
+-- ---------------------------------------------------------------------------
 -- ออกเลข "เหตุที่ N" ของวัน — เรียกตอนบันทึกเคสใหม่เท่านั้น (แก้เคสเดิมไม่แตะ)
 -- ---------------------------------------------------------------------------
 create or replace function public.next_ems_seq(p_date date)
