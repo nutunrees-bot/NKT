@@ -50,9 +50,18 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
       </div>
 
       <section className="mt-4 rounded-2xl border border-(--line) bg-(--card) p-4">
-        <h3 className="mb-3 border-b border-(--line) pb-2 text-sm font-semibold text-(--blue)">
-          รายการเคส EMS (ดู / แก้ไข)
-        </h3>
+        <div className="mb-3 flex items-center justify-between gap-2 border-b border-(--line) pb-2">
+          <h3 className="text-sm font-semibold text-(--blue)">
+            รายการเคส EMS (ดู / แก้ไข)
+          </h3>
+          <Link
+            href="/print/als/blank"
+            target="_blank"
+            className="shrink-0 text-[12px] text-(--muted) underline"
+          >
+            พิมพ์ ALS เปล่า
+          </Link>
+        </div>
         <DateRangeForm
           from={eFrom}
           to={eTo}

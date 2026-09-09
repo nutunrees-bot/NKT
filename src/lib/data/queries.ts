@@ -126,3 +126,98 @@ export async function nextEmsSeq(date: string): Promise<number | null> {
   if (error) return null;
   return data as number;
 }
+
+export type MonthlySummary = {
+  ems: {
+    total: number;
+    found: number;
+    notFound: number;
+    trauma: number;
+    nonTrauma: number;
+    severity: Record<string, number>;
+    bySubdistrict: Record<string, number>;
+    totalKm: number;
+  };
+  refer: {
+    total: number;
+    trauma: number;
+    nonTrauma: number;
+    byHospital: Record<string, number>;
+  };
+};
+
+/** สรุปรายเดือน — ดึงแถวของเดือนนั้นมานับในแอป (เดือนหนึ่งไม่กี่ร้อยเคส) */
+export async function getMonthlySummary(ym: string): Promise<MonthlySummary> {
+  const [y, m] = ym.split("-").map(Number);
+  const from = `${ym}-01`;
+  const to = `${ym}-${String(new Date(y, m, 0).getDate()).padStart(2, "0")}`;
+
+  const [emsResult, referResult] = await Promise.all([
+    db()
+      .from("ems_cases")
+      .select("severity, trauma_type, scene_status, address_subdistrict, total_km")
+      .gte("incident_date", from)
+      .lte("incident_date", to),
+    db()
+      .from("refer_cases")
+      .select("trauma_type, refer_hospital")
+      .gte("refer_date", from)
+      .lte("refer_date", to),
+  ]);
+
+  const emsRows = (emsResult.data ?? []) as Record<string, unknown>[];
+  const referRows = (referResult.data ?? []) as Record<string, unknown>[];
+
+  const severity: Record<string, number> = {};
+  const bySubdistrict: Record<string, number> = {};
+  let found = 0;
+  let notFound = 0;
+  let trauma = 0;
+  let nonTrauma = 0;
+  let totalKm = 0;
+
+  for (const r of emsRows) {
+    if (r.scene_status === "พบเหตุ") found++;
+    if (r.scene_status === "ไม่พบเหตุ") notFound++;
+    if (r.trauma_type === "Trauma") trauma++;
+    if (r.trauma_type === "Non-Trauma") nonTrauma++;
+    if (r.severity) severity[String(r.severity)] = (severity[String(r.severity)] ?? 0) + 1;
+    if (r.address_subdistrict) {
+      const key = String(r.address_subdistrict);
+      bySubdistrict[key] = (bySubdistrict[key] ?? 0) + 1;
+    }
+    const km = Number(r.total_km);
+    if (!Number.isNaN(km)) totalKm += km;
+  }
+
+  const byHospital: Record<string, number> = {};
+  let referTrauma = 0;
+  let referNonTrauma = 0;
+  for (const r of referRows) {
+    if (r.trauma_type === "Trauma") referTrauma++;
+    if (r.trauma_type === "Non-Trauma") referNonTrauma++;
+    if (r.refer_hospital) {
+      const key = String(r.refer_hospital);
+      byHospital[key] = (byHospital[key] ?? 0) + 1;
+    }
+  }
+
+  return {
+    ems: {
+      total: emsRows.length,
+      found,
+      notFound,
+      trauma,
+      nonTrauma,
+      severity,
+      bySubdistrict,
+      totalKm: Math.round(totalKm * 10) / 10,
+    },
+    refer: {
+      total: referRows.length,
+      trauma: referTrauma,
+      nonTrauma: referNonTrauma,
+      byHospital,
+    },
+  };
+}

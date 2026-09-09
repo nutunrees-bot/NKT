@@ -1,0 +1,407 @@
+-- ============================================================================
+-- NKT Rescue & Refer — รันไฟล์เดียวจบ (คัดลอกทั้งหมดไปวางใน Supabase SQL Editor)
+-- โปรเจค: hkmhyhuyalfpjewiilwx
+-- ⚠️ ส่วนแรกลบตาราง v1 ทิ้งถาวร (ยืนยันแล้วว่าเป็นข้อมูลทดสอบ 2026-09-09)
+-- ============================================================================
+
+-- ============================================================================
+-- ⚠️ ลบ schema v1 ทิ้งทั้งหมด — ข้อมูลใน 4 ตารางนี้หายถาวร กู้คืนไม่ได้
+--
+-- v1 คือของที่เดาฟิลด์เอาเอง ไม่ตรงกับระบบจริงที่ ER ใช้ (ผู้ใช้ยืนยันแล้วว่า
+-- เป็นข้อมูลทดสอบ ทิ้งได้ — 2026-09-09)
+--
+-- รันไฟล์นี้ก่อน แล้วค่อยรัน 0001_init.sql → 0002_seed.sql ตามลำดับ
+-- ============================================================================
+
+drop table if exists public.ems_cases      cascade;
+drop table if exists public.refer_records  cascade;
+drop table if exists public.triage_monthly cascade;
+drop table if exists public.profiles       cascade;
+
+-- ============================================================================
+-- NKT Rescue & Refer — schema v2 (เขียนใหม่ทั้งหมด)
+-- ถอดฟิลด์จากระบบ Google Apps Script ของจริง — ดู docs/legacy-app-spec.md
+--
+-- หลักการ:
+--   * ไม่ใช้ Supabase Auth — login ด้วย "รหัสเจ้าหน้าที่" เหมือนระบบเดิม
+--     ตรวจรหัสฝั่งเซิร์ฟเวอร์ (Next.js route handler + service_role key) แล้ววาง
+--     session cookie ให้ · เบราว์เซอร์ไม่เคยถือ key ที่แตะข้อมูลได้
+--   * ทุกตารางเปิด RLS แต่ตั้งใจไม่สร้าง policy ให้ anon/authenticated เลย =
+--     client ยิงตรงเข้ามาอ่านไม่ได้แม้รู้ anon key (ต่างจาก v1 ที่เปิดให้ anon หมด)
+--   * ไฟล์แนบ (ลายเซ็น/รูปถ่าย) เก็บใน Storage bucket ส่วนตัว เก็บแค่ path ในตาราง
+-- ============================================================================
+
+create extension if not exists pgcrypto;
+
+-- ---------------------------------------------------------------------------
+-- บัญชีเข้าระบบ (ระบบเดิมคือรหัสกลาง ERNKT001–ERNKT016 ไม่ผูกกับชื่อคน)
+-- ---------------------------------------------------------------------------
+create table public.accounts (
+  id            uuid primary key default gen_random_uuid(),
+  code          text not null unique,            -- รหัสที่ใช้ login (พิมพ์ใหญ่)
+  password_hash text not null,                   -- bcrypt ห้ามเก็บรหัสดิบ
+  display_name  text,                            -- ใส่ทีหลังได้ถ้าจะผูกรหัสกับคน
+  is_admin      boolean not null default false,
+  is_active     boolean not null default true,
+  created_at    timestamptz not null default now()
+);
+
+create table public.sessions (
+  id         uuid primary key default gen_random_uuid(),
+  account_id uuid not null references public.accounts (id) on delete cascade,
+  token_hash text not null unique,               -- เก็บ hash ของ token ไม่เก็บตัว token
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null,
+  revoked_at timestamptz
+);
+create index sessions_account_idx on public.sessions (account_id);
+
+-- แทนชีต 'บันทึกเข้าระบบ' ของเดิม
+create table public.login_events (
+  id         uuid primary key default gen_random_uuid(),
+  code       text not null,
+  action     text not null check (action in ('login','logout','failed')),
+  at         timestamptz not null default now()
+);
+create index login_events_at_idx on public.login_events (at desc);
+
+-- ---------------------------------------------------------------------------
+-- รายชื่อเจ้าหน้าที่สำหรับดรอปดาวน์ในฟอร์ม (คนละเรื่องกับบัญชี login)
+-- ---------------------------------------------------------------------------
+create table public.staff (
+  id         uuid primary key default gen_random_uuid(),
+  full_name  text not null unique,
+  -- rn = พยาบาล, aemt = เวชกิจฉุกเฉิน, assistant = ผู้ช่วย PN/NA, driver = พขร.
+  roles      text[] not null default '{}',
+  is_active  boolean not null default true,
+  sort_order int not null default 0
+);
+create index staff_active_idx on public.staff (is_active, sort_order);
+
+comment on column public.staff.roles is
+  'ใช้กรองรายชื่อในฟอร์ม: ผู้ให้บริการ 1/2 = rn+aemt, ผู้ช่วย = assistant, พขร. = driver, ผู้ประเมิน = rn เท่านั้น';
+
+-- ---------------------------------------------------------------------------
+-- ตารางอ้างอิง (ของเดิม hard-code ในโค้ด — ย้ายมาให้แก้ได้โดยไม่ต้อง deploy)
+-- ---------------------------------------------------------------------------
+create table public.hospitals (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  sort_order int not null default 0,
+  is_active boolean not null default true
+);
+
+create table public.subdistricts (          -- ตำบลในเขตรับผิดชอบ + "นอกเขต"
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  sort_order int not null default 0,
+  is_active boolean not null default true
+);
+
+-- ---------------------------------------------------------------------------
+-- EMS — ทะเบียนปฏิบัติการฉุกเฉิน
+-- ---------------------------------------------------------------------------
+create table public.ems_cases (
+  id uuid primary key default gen_random_uuid(),
+
+  -- ข้อมูลทั่วไป -------------------------------------------------------------
+  incident_date date not null,
+  seq_no        int  not null,                   -- "เหตุที่ N" ของวันนั้น ระบบออกให้
+  op_no         text,                            -- เลขปฏิบัติการ
+  shift         text check (shift in ('เช้า','บ่าย','ดึก')),
+  staff_provider1 text,                          -- เก็บเป็นชื่อ เพราะฟอร์มพิมพ์เองได้
+  staff_provider2 text,
+  staff_helper    text,
+  staff_driver    text,
+
+  -- เหตุการณ์ ---------------------------------------------------------------
+  received_from text check (received_from in ('1669','ER','วิทยุ')),
+  incident_type text check (incident_type in ('พรบ','อุบัติเหตุ','ฉุกเฉิน')),
+  incident_detail text,
+  location      text,
+  caller_phone  text,
+  severity      text check (severity in ('สีแดง','สีเหลือง','สีเขียว','สีขาว','สีดำ')),
+  trauma_type   text check (trauma_type in ('Trauma','Non-Trauma')),
+  scene_status  text check (scene_status in ('พบเหตุ','ไม่พบเหตุ','ไม่ประสงค์ รพ.')),
+
+  -- เวลาปฏิบัติการ ----------------------------------------------------------
+  t_received        time,
+  t_dispatch        time,
+  t_depart_station  time,
+  t_arrive_scene    time,
+  t_depart_scene    time,
+  t_arrive_hospital time,
+  t_arrive_station  time,
+  -- คำนวณให้เลย เผื่อข้ามเที่ยงคืน (+1440 แล้ว mod) เหมือนสูตรในแอปเดิม
+  response_time_min int generated always as (
+    case when t_received is null or t_arrive_scene is null then null
+    else ((extract(epoch from (t_arrive_scene - t_received))/60)::int + 1440) % 1440 end
+  ) stored,
+  hospital_time_min int generated always as (
+    case when t_depart_scene is null or t_arrive_hospital is null then null
+    else ((extract(epoch from (t_arrive_hospital - t_depart_scene))/60)::int + 1440) % 1440 end
+  ) stored,
+
+  -- เลขไมล์ -----------------------------------------------------------------
+  mile_out      numeric(10,1),
+  mile_scene    numeric(10,1),
+  mile_hospital numeric(10,1),
+  mile_station  numeric(10,1),
+  total_km      numeric(10,1) generated always as (mile_station - mile_out) stored,
+
+  -- ผู้ป่วย -----------------------------------------------------------------
+  patient_name        text,
+  patient_age         int,
+  patient_national_id text,
+  patient_hn          text,
+  address_subdistrict text,
+  nationality         text check (nationality in ('คนไทย','แรงงานต่างด้าว','ชาวต่างชาติ')),
+  nationality_detail  text,
+  insurance_right     text check (insurance_right in
+    ('บัตรทอง','ข้าราชการ','ประกันสังคม','แรงงานต่างด้าวขึ้นทะเบียน','ไม่มีหลักประกัน')),
+  symptoms            text,  -- "อาการ" — ชีตเดิมมีคอลัมน์นี้แต่ฟอร์มไม่เคยส่งค่ามา (ของใหม่ต้องมีช่องกรอก)
+  dx                  text,
+
+  -- Vital signs ชุดแรก (ชุดประเมินซ้ำอยู่ตาราง ems_vitals) ---------------------
+  bp        text,
+  pr        int,
+  rr        int,
+  bt        numeric(4,1),
+  o2sat     int,
+  gcs_e     int check (gcs_e between 1 and 4),
+  gcs_v     int check (gcs_v between 1 and 5),
+  gcs_m     int check (gcs_m between 1 and 6),
+  gcs_total int generated always as (
+    coalesce(gcs_e,0) + coalesce(gcs_v,0) + coalesce(gcs_m,0)
+  ) stored,
+  pupil_l   text,
+  pupil_r   text,
+  dtx       int,
+  treatment text,
+
+  -- Trauma (เลือกได้หลายค่า) -------------------------------------------------
+  wound  text[] not null default '{}',
+  deform text[] not null default '{}',
+  bleed  text[] not null default '{}',
+  organ  text[] not null default '{}',
+
+  -- Non-Trauma (เลือกได้หลายค่า + ช่อง Other) ---------------------------------
+  medical        text[] not null default '{}',
+  medical_other  text,
+  obgyn          text[] not null default '{}',
+  obgyn_other    text,
+  peds           text[] not null default '{}',
+  peds_other     text,
+  surgical       text[] not null default '{}',
+  surgical_other text,
+  other_nt       text[] not null default '{}',
+
+  -- การช่วยเหลือ ------------------------------------------------------------
+  airway      text[] not null default '{}',
+  wound_care  text[] not null default '{}',
+  fluid       text[] not null default '{}',
+  fluid_other text,
+  splint      text[] not null default '{}',
+  cpr         text[] not null default '{}',
+  initial_care_result text check (initial_care_result in
+    ('ไม่ยอมให้รักษา','ทุเลา','คงเดิม/คงที่','ทรุดหนัก',
+     'เสียชีวิต ณ จุดเกิดเหตุ','เสียชีวิตขณะนำส่ง')),
+
+  -- ลายเซ็น/รูปยืนยัน (เก็บ path ใน Storage bucket 'ems-attachments') ----------
+  death_signature_path      text,
+  death_signer_name         text,
+  death_photo_path          text,
+  palliative_care           boolean not null default false,
+  palliative_signature_path text,
+  palliative_signer_name    text,
+
+  -- สรุปรายงาน + ผลการรักษา --------------------------------------------------
+  report_summarizer text,
+  evaluator_name    text,                        -- เฉพาะ RN
+  outcome           text check (outcome in ('D/C','Admit','Refer','Death')),
+  refer_hospital    text,                        -- กรอกเมื่อ outcome = 'Refer'
+
+  created_by uuid references public.accounts (id),
+  updated_by uuid references public.accounts (id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+
+  constraint ems_cases_seq_per_day unique (incident_date, seq_no)
+);
+create index ems_cases_date_idx     on public.ems_cases (incident_date desc);
+create index ems_cases_severity_idx on public.ems_cases (severity);
+create index ems_cases_hn_idx       on public.ems_cases (patient_hn);
+create index ems_cases_op_no_idx    on public.ems_cases (op_no);
+
+-- ชุด Vital Signs ประเมินซ้ำ (แอปเดิมยัดเป็น JSON ช่องเดียว — แยกตารางให้ query ได้)
+create table public.ems_vitals (
+  id         uuid primary key default gen_random_uuid(),
+  case_id    uuid not null references public.ems_cases (id) on delete cascade,
+  sort_order int  not null default 0,
+  measured_at time,
+  bp    text,
+  pr    int,
+  rr    int,
+  bt    numeric(4,1),
+  o2sat int,
+  gcs_e int,
+  gcs_v int,
+  gcs_m int,
+  gcs_total int generated always as (
+    coalesce(gcs_e,0) + coalesce(gcs_v,0) + coalesce(gcs_m,0)
+  ) stored,
+  pupil_l text,
+  pupil_r text,
+  dtx     int
+);
+create index ems_vitals_case_idx on public.ems_vitals (case_id, sort_order);
+
+-- ---------------------------------------------------------------------------
+-- REFER — ทะเบียนส่งต่อ
+-- ---------------------------------------------------------------------------
+create table public.refer_cases (
+  id           uuid primary key default gen_random_uuid(),
+  refer_date   date not null,
+  patient_name text,
+  patient_hn   text,
+  patient_age  int,
+  dx           text,
+  refer_hospital text,
+  trauma_type  text check (trauma_type in ('Trauma','Non-Trauma')),
+  team         text check (team in ('แพทย์+พยาบาล','พยาบาล+ผู้ช่วย','พยาบาล')),
+  severity     text check (severity in (
+    'ระดับวิกฤต (ฉุกเฉินสีแดง)',
+    'ระดับฉุกเฉิน (ฉุกเฉินสีเหลือง)',
+    'ระดับเร่งด่วน (ฉุกเฉินสีเขียว)',
+    'ระดับไม่เร่งด่วน (ปกติ)')),
+  created_by uuid references public.accounts (id),
+  updated_by uuid references public.accounts (id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index refer_cases_date_idx on public.refer_cases (refer_date desc);
+create index refer_cases_hn_idx   on public.refer_cases (patient_hn);
+
+-- ---------------------------------------------------------------------------
+-- ตรวจรหัสผ่าน — เทียบ bcrypt ในฐานข้อมูล แอปไม่ต้องเห็น hash
+-- ---------------------------------------------------------------------------
+create or replace function public.verify_account(p_code text, p_password text)
+returns uuid
+language sql
+as 'select id from public.accounts
+     where code = upper(p_code)
+       and is_active
+       and password_hash = crypt(p_password, password_hash)';
+
+-- ---------------------------------------------------------------------------
+-- ออกเลข "เหตุที่ N" ของวัน — เรียกตอนบันทึกเคสใหม่เท่านั้น (แก้เคสเดิมไม่แตะ)
+-- ---------------------------------------------------------------------------
+create or replace function public.next_ems_seq(p_date date)
+returns int
+language sql
+as 'select coalesce(max(seq_no), 0) + 1 from public.ems_cases where incident_date = p_date';
+
+-- ---------------------------------------------------------------------------
+-- updated_at ให้ขยับเองทุกครั้งที่แก้
+-- ---------------------------------------------------------------------------
+create or replace function public.touch_updated_at()
+returns trigger language plpgsql as '
+begin new.updated_at = now(); return new; end;
+';
+
+create trigger ems_cases_touch   before update on public.ems_cases
+  for each row execute function public.touch_updated_at();
+create trigger refer_cases_touch before update on public.refer_cases
+  for each row execute function public.touch_updated_at();
+
+-- ---------------------------------------------------------------------------
+-- RLS: เปิดทุกตาราง และตั้งใจไม่สร้าง policy → anon/authenticated เข้าไม่ได้เลย
+-- แอปเข้าถึงผ่าน service_role ฝั่งเซิร์ฟเวอร์เท่านั้น (bypass RLS)
+-- ---------------------------------------------------------------------------
+alter table public.accounts     enable row level security;
+alter table public.sessions     enable row level security;
+alter table public.login_events enable row level security;
+alter table public.staff        enable row level security;
+alter table public.hospitals    enable row level security;
+alter table public.subdistricts enable row level security;
+alter table public.ems_cases    enable row level security;
+alter table public.ems_vitals   enable row level security;
+alter table public.refer_cases  enable row level security;
+
+revoke all on all tables in schema public from anon, authenticated;
+
+-- ============================================================================
+-- ข้อมูลตั้งต้น — ยกมาจากที่ hard-code อยู่ในแอป GAS เดิม
+-- ============================================================================
+
+-- ตำบลในเขตรับผิดชอบ (เรียงตามลำดับเดิมในฟอร์ม) -------------------------------
+insert into public.subdistricts (name, sort_order) values
+  ('นครไทย', 1), ('หนองกระท้าว', 2), ('นาบัว', 3), ('เนินเพิ่ม', 4),
+  ('บ้านพร้าว', 5), ('บ่อโพธิ์', 6), ('ยางโกลน', 7), ('ห้วยเฮี้ย', 8),
+  ('นครชุม', 9), ('น้ำกุ่ม', 10), ('นอกเขต', 11)
+on conflict (name) do nothing;
+
+-- โรงพยาบาลปลายทางที่ส่งต่อ ----------------------------------------------------
+insert into public.hospitals (name, sort_order) values
+  ('รพ.พุทธชินราช', 1),
+  ('รพ.มหาวิทยาลัยนเรศวร', 2),
+  ('รพ.ค่ายสมเด็จพระนเรศวรมหาราช', 3),
+  ('รพ.จิตเวชพิษณุโลก', 4),
+  ('รพ.ชาติตระการ', 5),
+  ('รพ.เนินมะปราง', 6),
+  ('รพ.บางกระทุ่ม', 7),
+  ('รพ.บางระกำ', 8),
+  ('รพ.พรหมพิราม', 9),
+  ('รพ.วังทอง', 10),
+  ('รพ.วัดโบสถ์', 11)
+on conflict (name) do nothing;
+
+-- รายชื่อเจ้าหน้าที่สำหรับดรอปดาวน์ -------------------------------------------
+insert into public.staff (full_name, roles, sort_order) values
+  -- RN (11)
+  ('ยุทธพล', '{rn}', 1), ('อรุณี', '{rn}', 2), ('กนกวรรณ', '{rn}', 3),
+  ('นิชธาวัลย์', '{rn}', 4), ('กลศาสตร์', '{rn}', 5), ('เทอดพงษ์', '{rn}', 6),
+  ('วิภาลัย', '{rn}', 7), ('จีระศักดิ์', '{rn}', 8), ('กัญญา', '{rn}', 9),
+  ('นภเกตน์', '{rn}', 10), ('สิริณัฐฐา', '{rn}', 11),
+  -- AEMT (5)
+  ('พัชรพร', '{aemt}', 12), ('จิตรานุช', '{aemt}', 13), ('ณัฎฐ์นรี', '{aemt}', 14),
+  ('วรรณา', '{aemt}', 15), ('ณัฐริกา', '{aemt}', 16),
+  -- ผู้ช่วยเหลือ PN/NA (7)
+  ('กัลยา', '{assistant}', 17), ('ปริญาภรณ์', '{assistant}', 18), ('จินตนา', '{assistant}', 19),
+  ('นภัทธัญธรณ์', '{assistant}', 20), ('นันท์นภัส', '{assistant}', 21), ('อานนท์', '{assistant}', 22),
+  ('ชัยพร', '{assistant}', 23),
+  -- พนักงานขับรถ (7)
+  ('สมศักดิ์', '{driver}', 24), ('รณชิต', '{driver}', 25), ('นิตินันท์', '{driver}', 26),
+  ('ฉัตรชัย', '{driver}', 27), ('ไตรภพ', '{driver}', 28), ('นุการ', '{driver}', 29),
+  ('ชยพล', '{driver}', 30)
+on conflict (full_name) do nothing;
+
+-- ============================================================================
+-- บัญชีเข้าระบบ ERNKT001–ERNKT016
+--
+-- ระบบเดิมใช้ "รหัสผ่าน = รหัสผู้ใช้" ตรงๆ · ที่นี่คงพฤติกรรมเดิมไว้เพื่อให้
+-- เจ้าหน้าที่เข้าได้เหมือนเคย แต่เก็บเป็น bcrypt ไม่ใช่ค่าเปล่า
+--
+-- ⚠️ รหัสชุดนี้เดาได้ทั้งหมด (ERNKT + เลข 3 หลัก) และเป็นรหัสกลางที่ไม่รู้ว่า
+--    ใครเป็นคนกรอกจริง — ควรเปลี่ยนรหัสผ่านรายคนภายหลัง โดยรัน:
+--      update public.accounts
+--         set password_hash = crypt('<รหัสใหม่>', gen_salt('bf'))
+--       where code = 'ERNKT001';
+-- ============================================================================
+insert into public.accounts (code, password_hash)
+select code, crypt(code, gen_salt('bf'))
+from (
+  select 'ERNKT' || lpad(g::text, 3, '0') as code from generate_series(1, 16) as g
+) s
+on conflict (code) do nothing;
+
+-- ============================================================================
+-- ที่เก็บไฟล์แนบ (ลายเซ็นญาติ / รูปถ่ายยืนยัน)
+--
+-- public = false โดยตั้งใจ — ระบบเดิมอัปรูปผู้เสียชีวิตขึ้น Drive แบบ
+-- "ทุกคนที่มีลิงก์ดูได้" · ของใหม่ต้องขอลิงก์มีอายุจากเซิร์ฟเวอร์ทุกครั้ง
+-- ไม่มี policy ให้ anon = เบราว์เซอร์เข้าถึง bucket ตรงๆ ไม่ได้
+-- ============================================================================
+insert into storage.buckets (id, name, public)
+values ('ems-attachments', 'ems-attachments', false)
+on conflict (id) do nothing;
