@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# ไฟล์ที่เบราว์เซอร์ดาวน์โหลดมาลงโฟลเดอร์นี้ (อาจมีข้อมูลผู้ป่วย)
+/*.csv
