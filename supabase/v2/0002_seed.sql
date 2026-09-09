@@ -62,3 +62,14 @@ from (
   select 'ERNKT' || lpad(g::text, 3, '0') as code from generate_series(1, 16) as g
 ) s
 on conflict (code) do nothing;
+
+-- ============================================================================
+-- ที่เก็บไฟล์แนบ (ลายเซ็นญาติ / รูปถ่ายยืนยัน)
+--
+-- public = false โดยตั้งใจ — ระบบเดิมอัปรูปผู้เสียชีวิตขึ้น Drive แบบ
+-- "ทุกคนที่มีลิงก์ดูได้" · ของใหม่ต้องขอลิงก์มีอายุจากเซิร์ฟเวอร์ทุกครั้ง
+-- ไม่มี policy ให้ anon = เบราว์เซอร์เข้าถึง bucket ตรงๆ ไม่ได้
+-- ============================================================================
+insert into storage.buckets (id, name, public)
+values ('ems-attachments', 'ems-attachments', false)
+on conflict (id) do nothing;

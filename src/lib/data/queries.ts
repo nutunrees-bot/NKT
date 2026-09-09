@@ -1,4 +1,5 @@
 import { db } from "@/lib/supabase/admin";
+import type { Lookups } from "@/lib/domain/lookups";
 
 type AccountRef = { code: string } | { code: string }[] | null;
 
@@ -77,7 +78,7 @@ export async function getReferCase(id: string) {
 }
 
 /** รายชื่อ/รพ./ตำบล ที่แอปเดิม hard-code ไว้ ตอนนี้อยู่ใน DB แก้ได้โดยไม่ต้อง deploy */
-export async function getLookups() {
+export async function getLookups(): Promise<Lookups> {
   const [staff, hospitals, subdistricts] = await Promise.all([
     db()
       .from("staff")
@@ -118,4 +119,10 @@ export async function getLookups() {
   };
 }
 
-export type Lookups = Awaited<ReturnType<typeof getLookups>>;
+
+/** เลข "เหตุที่" ที่ระบบจะออกให้เคสถัดไปของวันนั้น (โชว์ให้เห็นก่อนบันทึก) */
+export async function nextEmsSeq(date: string): Promise<number | null> {
+  const { data, error } = await db().rpc("next_ems_seq", { p_date: date });
+  if (error) return null;
+  return data as number;
+}
