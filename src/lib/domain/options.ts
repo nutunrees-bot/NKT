@@ -148,7 +148,7 @@ export const MULTI_GROUPS = {
     label: "การให้สารน้ำ",
     section: "treatment",
     otherField: "fluid_other",
-    options: ["No", "NSS", "RLS", "5%DN/2", "On locked", "Others"],
+    options: ["No", "NSS", "RLS", "5%DN/2", "10%DN/2", "Acetar", "On locked", "Others"],
   },
   splint: {
     label: "ดามกระดูก",
