@@ -10,8 +10,17 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="min-h-dvh pb-10">
       <header className="sticky top-0 z-10 border-b-4 border-(--hivis) bg-linear-135 from-(--navy) to-(--blue-light) px-4 pt-3.5 pb-4 text-center text-white shadow-[0_2px_8px_rgba(0,0,0,.15)]">
-        <Link href="/" className="text-[22px] font-semibold">
-          🚑 NKT Rescue
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-[22px] font-semibold"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-er.jpg"
+            alt=""
+            className="h-8 w-8 rounded-full object-cover"
+          />
+          NKT Rescue
         </Link>
         <div className="mt-0.5 text-[12.5px] opacity-90">
           ER Nakhonthai Crown Prince Hospital
