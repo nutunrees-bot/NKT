@@ -422,7 +422,10 @@ export default function EmsForm({
         <Field label="ที่อยู่">
           <select
             value={values.address_subdistrict}
-            onChange={(e) => set("address_subdistrict", e.target.value)}
+            onChange={(e) => {
+              set("address_subdistrict", e.target.value);
+              if (e.target.value !== "นอกเขต") set("address_detail", "");
+            }}
             className={inputClass}
           >
             <option value="">— เลือกตำบล —</option>
@@ -431,6 +434,15 @@ export default function EmsForm({
             ))}
           </select>
         </Field>
+        {values.address_subdistrict === "นอกเขต" && (
+          <Field label="ระบุที่อยู่ (นอกเขต)">
+            <input
+              value={values.address_detail}
+              onChange={(e) => set("address_detail", e.target.value)}
+              className={inputClass}
+            />
+          </Field>
+        )}
         <Field label="สัญชาติ/ประเภทผู้ป่วย">
           <ChipGroup
             options={NATIONALITIES}

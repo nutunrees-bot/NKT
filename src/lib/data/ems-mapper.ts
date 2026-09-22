@@ -77,6 +77,7 @@ export function rowToFormValues(row: Row): EmsFormValues {
     patient_national_id: s(row.patient_national_id),
     patient_hn: s(row.patient_hn),
     address_subdistrict: s(row.address_subdistrict),
+    address_detail: s(row.address_detail),
     nationality: s(row.nationality),
     nationality_detail: s(row.nationality_detail),
     insurance_right: s(row.insurance_right),

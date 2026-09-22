@@ -106,6 +106,7 @@ function baseRow(f: EmsFormValues) {
     patient_national_id: txt(f.patient_national_id),
     patient_hn: txt(f.patient_hn),
     address_subdistrict: txt(f.address_subdistrict),
+    address_detail: txt(f.address_detail),
     nationality: txt(f.nationality),
     nationality_detail: txt(f.nationality_detail),
     insurance_right: txt(f.insurance_right),

@@ -135,6 +135,7 @@ create table public.ems_cases (
   patient_national_id text,
   patient_hn          text,
   address_subdistrict text,
+  address_detail      text,  -- ระบุที่อยู่เพิ่มเติมเมื่อ address_subdistrict = 'นอกเขต'
   nationality         text check (nationality in ('คนไทย','แรงงานต่างด้าว','ชาวต่างชาติ')),
   nationality_detail  text,
   insurance_right     text check (insurance_right in

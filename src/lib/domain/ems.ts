@@ -80,6 +80,7 @@ export type EmsFormValues = {
   patient_national_id: string;
   patient_hn: string;
   address_subdistrict: string;
+  address_detail: string;
   nationality: string;
   nationality_detail: string;
   insurance_right: string;
@@ -156,6 +157,7 @@ export function emptyEmsForm(incidentDate: string): EmsFormValues {
     patient_national_id: "",
     patient_hn: "",
     address_subdistrict: "",
+    address_detail: "",
     nationality: "",
     nationality_detail: "",
     insurance_right: "",

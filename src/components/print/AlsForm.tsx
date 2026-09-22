@@ -345,7 +345,14 @@ export default function AlsForm({
                 HN <Line value={s(row.patient_hn)} w={100} />
               </span>
               <span className="fld">
-                ที่อยู่ <Line value={s(row.address_subdistrict)} w={260} />
+                ที่อยู่{" "}
+                <Line
+                  value={
+                    s(row.address_subdistrict) +
+                    (row.address_detail ? ` (${s(row.address_detail)})` : "")
+                  }
+                  w={260}
+                />
               </span>
             </div>
             <div className="row">
