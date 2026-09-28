@@ -10,6 +10,7 @@ import { Card, PageHeader } from "@/components/shell/ui";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
+  RegistryIcon,
   SheetIcon,
 } from "@/components/shell/icons";
 
@@ -57,7 +58,10 @@ function Bar({
       <div className="h-[16px] flex-1 overflow-hidden rounded-full bg-(--page-bg)">
         <div
           className="h-full rounded-full"
-          style={{ width: `${max > 0 ? (count / max) * 100 : 0}%`, background: color }}
+          style={{
+            width: `${max > 0 ? (count / max) * 100 : 0}%`,
+            background: color,
+          }}
         />
       </div>
       <span className="w-8 shrink-0 text-[13px] font-bold">{count}</span>
@@ -75,9 +79,7 @@ function Donut({
   // ไล่ส่วนโค้งตามลำดับโดยไม่แก้ค่าตัวแปรนอกฟังก์ชัน (กติกา react-hooks/immutability)
   const shown = segments.filter((s) => s.count > 0);
   const stops = shown.map((s, i) => {
-    const before = shown
-      .slice(0, i)
-      .reduce((sum, prev) => sum + prev.count, 0);
+    const before = shown.slice(0, i).reduce((sum, prev) => sum + prev.count, 0);
     const start = (before / total) * 100;
     const end = ((before + s.count) / total) * 100;
     return `${s.color} ${start.toFixed(2)}% ${end.toFixed(2)}%`;
@@ -154,7 +156,9 @@ export default async function AreaPage({ searchParams }: PageProps<"/area">) {
 
   // ตำบลที่ไม่อยู่ในรายการอ้างอิง (เช่น ข้อมูลเก่าสะกดต่าง) + เคสที่ไม่ได้ระบุตำบล
   const known = new Set(lookups.subdistricts);
-  const otherAreas = Object.entries(ems.bySubdistrict).filter(([a]) => !known.has(a));
+  const otherAreas = Object.entries(ems.bySubdistrict).filter(
+    ([a]) => !known.has(a),
+  );
   const withArea = Object.values(ems.bySubdistrict).reduce((a, b) => a + b, 0);
   const noArea = ems.total - withArea;
 
@@ -198,6 +202,13 @@ export default async function AreaPage({ searchParams }: PageProps<"/area">) {
       </div>
 
       {/* ทะเบียนออกเหตุรายเดือน (ผังเดียวกับชีต EMS69 ที่พิมพ์มือ) ของเดือนที่เลือก */}
+      <Link
+        href={`/register?ym=${ym}`}
+        className="mb-2 flex items-center justify-center gap-2 rounded-2xl border-2 border-(--accent) bg-white px-4 py-3 text-[14.5px] font-semibold text-(--accent) shadow-(--card-shadow) active:opacity-90"
+      >
+        <RegistryIcon className="size-5" />
+        ดูตารางทะเบียนออกเหตุ · {thaiMonthLabel(ym)}
+      </Link>
       <a
         href={`/api/export/ems-month?ym=${ym}`}
         download
@@ -218,7 +229,13 @@ export default async function AreaPage({ searchParams }: PageProps<"/area">) {
           />
         ))}
         {otherAreas.map(([area, count]) => (
-          <Bar key={area} label={area} count={count} max={areaMax} color="#9ca3af" />
+          <Bar
+            key={area}
+            label={area}
+            count={count}
+            max={areaMax}
+            color="#9ca3af"
+          />
         ))}
         {noArea > 0 && (
           <p className="mt-2 text-[12px] text-(--muted)">
@@ -236,14 +253,27 @@ export default async function AreaPage({ searchParams }: PageProps<"/area">) {
       </h2>
 
       <div className="mb-4 grid grid-cols-2 gap-3">
-        <Kpi value={ems.total} label="ออกเหตุ EMS ทั้งหมด" color="var(--accent)" />
+        <Kpi
+          value={ems.total}
+          label="ออกเหตุ EMS ทั้งหมด"
+          color="var(--accent)"
+        />
         <Kpi value={ems.found} label="พบเหตุ" color="#2e7d32" />
         <Kpi value={ems.notFound} label="ไม่พบเหตุ" color="#b8590f" />
-        <Kpi value={refer.total} label="ส่งต่อ (REFER) ทั้งหมด" color="#1d5f99" />
+        <Kpi
+          value={refer.total}
+          label="ส่งต่อ (REFER) ทั้งหมด"
+          color="#1d5f99"
+        />
       </div>
 
       <Panel title="ประเภทเหตุ (EMS)">
-        <Bar label="Trauma" count={ems.trauma} max={ems.total || 1} color="#e74c3c" />
+        <Bar
+          label="Trauma"
+          count={ems.trauma}
+          max={ems.total || 1}
+          color="#e74c3c"
+        />
         <Bar
           label="Non-Trauma"
           count={ems.nonTrauma}

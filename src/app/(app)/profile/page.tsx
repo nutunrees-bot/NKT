@@ -19,8 +19,24 @@ export default async function ProfilePage() {
   if (!session) redirect("/login");
 
   const links = [
-    { href: "/area", label: "สรุป EMS & REFER รายเดือน", icon: PinIcon, blank: false },
-    { href: "/registry", label: "ค้นทะเบียนผู้ป่วย", icon: RegistryIcon, blank: false },
+    {
+      href: "/area",
+      label: "สรุป EMS & REFER รายเดือน",
+      icon: PinIcon,
+      blank: false,
+    },
+    {
+      href: "/registry",
+      label: "ค้นทะเบียนผู้ป่วย",
+      icon: RegistryIcon,
+      blank: false,
+    },
+    {
+      href: "/register",
+      label: "ตารางทะเบียนออกเหตุรายเดือน",
+      icon: SheetIcon,
+      blank: false,
+    },
     {
       // ไฟล์ดาวน์โหลด (route handler) — ใช้ <a> ธรรมดา ไม่ใช่ <Link>
       href: `/api/export/ems-month?ym=${currentMonthISO()}`,
@@ -29,7 +45,12 @@ export default async function ProfilePage() {
       blank: false,
       download: true,
     },
-    { href: "/print/als/blank", label: "พิมพ์ฟอร์ม ALS เปล่า", icon: PrinterIcon, blank: true },
+    {
+      href: "/print/als/blank",
+      label: "พิมพ์ฟอร์ม ALS เปล่า",
+      icon: PrinterIcon,
+      blank: true,
+    },
   ];
 
   return (
@@ -41,8 +62,12 @@ export default async function ProfilePage() {
           alt="NKT ER"
           className="size-20 rounded-full object-cover shadow-(--card-shadow)"
         />
-        <div className="mt-3 text-[12.5px] text-(--muted)">เข้าสู่ระบบด้วยรหัส</div>
-        <div className="text-[24px] font-bold tracking-wide">{session.code}</div>
+        <div className="mt-3 text-[12.5px] text-(--muted)">
+          เข้าสู่ระบบด้วยรหัส
+        </div>
+        <div className="text-[24px] font-bold tracking-wide">
+          {session.code}
+        </div>
         <div className="mt-1 text-[12px] text-(--muted)">
           NKT Rescue · ER โรงพยาบาลสมเด็จพระยุพราชนครไทย
         </div>

@@ -44,7 +44,10 @@ const TABS: Tab[] = [
     href: "/area",
     label: "พื้นที่",
     icon: PinIcon,
-    match: (p) => p.startsWith("/area") || p.startsWith("/summary"),
+    match: (p) =>
+      p.startsWith("/area") ||
+      p.startsWith("/summary") ||
+      p.startsWith("/register"),
   },
   {
     href: "/profile",
