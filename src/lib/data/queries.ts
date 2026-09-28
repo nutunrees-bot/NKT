@@ -96,7 +96,8 @@ export async function searchCases(query: string, limit = 50) {
   ]);
 
   if (e.error) throw new Error(`ค้นทะเบียน EMS ไม่สำเร็จ: ${e.error.message}`);
-  if (r.error) throw new Error(`ค้นทะเบียน REFER ไม่สำเร็จ: ${r.error.message}`);
+  if (r.error)
+    throw new Error(`ค้นทะเบียน REFER ไม่สำเร็จ: ${r.error.message}`);
 
   return {
     ems: (e.data ?? []) as unknown as EmsListItem[],
@@ -234,10 +235,11 @@ export async function getLookups(): Promise<Lookups> {
     assistants: byRole("assistant").map((n) => ({ value: n, label: n })),
     drivers: byRole("driver").map((n) => ({ value: n, label: n })),
     hospitals: (hospitals.data ?? []).map((h: { name: string }) => h.name),
-    subdistricts: (subdistricts.data ?? []).map((s: { name: string }) => s.name),
+    subdistricts: (subdistricts.data ?? []).map(
+      (s: { name: string }) => s.name,
+    ),
   };
 }
-
 
 /** เลข "เหตุที่" ที่ระบบจะออกให้เคสถัดไปของวันนั้น (โชว์ให้เห็นก่อนบันทึก) */
 export async function nextEmsSeq(date: string): Promise<number | null> {
@@ -274,7 +276,9 @@ export async function getMonthlySummary(ym: string): Promise<MonthlySummary> {
   const [emsResult, referResult] = await Promise.all([
     db()
       .from("ems_cases")
-      .select("severity, trauma_type, scene_status, address_subdistrict, total_km")
+      .select(
+        "severity, trauma_type, scene_status, address_subdistrict, total_km",
+      )
       .gte("incident_date", from)
       .lte("incident_date", to),
     db()
@@ -300,7 +304,8 @@ export async function getMonthlySummary(ym: string): Promise<MonthlySummary> {
     if (r.scene_status === "ไม่พบเหตุ") notFound++;
     if (r.trauma_type === "Trauma") trauma++;
     if (r.trauma_type === "Non-Trauma") nonTrauma++;
-    if (r.severity) severity[String(r.severity)] = (severity[String(r.severity)] ?? 0) + 1;
+    if (r.severity)
+      severity[String(r.severity)] = (severity[String(r.severity)] ?? 0) + 1;
     if (r.address_subdistrict) {
       const key = String(r.address_subdistrict);
       bySubdistrict[key] = (bySubdistrict[key] ?? 0) + 1;
@@ -376,4 +381,62 @@ export async function listEmsRegister(from: string, to: string) {
 
   if (error) throw new Error(`โหลดทะเบียน EMS ไม่สำเร็จ: ${error.message}`);
   return (data ?? []) as unknown as EmsRegisterRow[];
+}
+
+export type MyProfile = {
+  code: string;
+  displayName: string | null;
+  isAdmin: boolean;
+  createdAt: string;
+  ems: { month: number; total: number };
+  refer: { month: number; total: number };
+  logins: { action: string; at: string }[];
+};
+
+/** ข้อมูลเจ้าหน้าที่ที่ login อยู่ + จำนวนเคสที่ตัวเองบันทึก + ประวัติเข้าระบบล่าสุด */
+export async function getMyProfile(
+  accountId: string,
+  monthFrom: string,
+  monthTo: string,
+): Promise<MyProfile> {
+  const count = (table: string, dateCol: string, month: boolean) => {
+    let q = db()
+      .from(table)
+      .select("id", { count: "exact", head: true })
+      .eq("created_by", accountId);
+    if (month) q = q.gte(dateCol, monthFrom).lte(dateCol, monthTo);
+    return q;
+  };
+
+  const { data: acc, error } = await db()
+    .from("accounts")
+    .select("code, display_name, is_admin, created_at")
+    .eq("id", accountId)
+    .single();
+  if (error || !acc)
+    throw new Error(`โหลดข้อมูลบัญชีไม่สำเร็จ: ${error?.message}`);
+
+  const [emsMonth, emsTotal, referMonth, referTotal, logins] =
+    await Promise.all([
+      count("ems_cases", "incident_date", true),
+      count("ems_cases", "incident_date", false),
+      count("refer_cases", "refer_date", true),
+      count("refer_cases", "refer_date", false),
+      db()
+        .from("login_events")
+        .select("action, at")
+        .eq("code", acc.code)
+        .order("at", { ascending: false })
+        .limit(5),
+    ]);
+
+  return {
+    code: acc.code,
+    displayName: acc.display_name,
+    isAdmin: acc.is_admin,
+    createdAt: acc.created_at,
+    ems: { month: emsMonth.count ?? 0, total: emsTotal.count ?? 0 },
+    refer: { month: referMonth.count ?? 0, total: referTotal.count ?? 0 },
+    logins: (logins.data ?? []) as { action: string; at: string }[],
+  };
 }

@@ -82,8 +82,13 @@ export function thaiLongDate(iso: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
   if (!m) return iso;
   // เที่ยงวัน UTC = วันเดียวกันในเวลาไทยเสมอ ไม่เลื่อนวัน
-  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12));
-  return new Intl.DateTimeFormat("th-TH", { dateStyle: "full", timeZone: TZ }).format(d);
+  const d = new Date(
+    Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12),
+  );
+  return new Intl.DateTimeFormat("th-TH", {
+    dateStyle: "full",
+    timeZone: TZ,
+  }).format(d);
 }
 
 /** "2026-09" -> "2026-08" / "2026-10" */
@@ -124,4 +129,23 @@ export function monthRange(ym: string): [string, string] {
   const [y, m] = ym.split("-").map(Number);
   const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
   return [`${ym}-01`, `${ym}-${String(last).padStart(2, "0")}`];
+}
+
+/** timestamptz -> "28 ก.ย. 2569 18:20" ตามเวลาไทย */
+export function thaiDateTime(ts: string | null | undefined): string {
+  if (!ts) return "-";
+  const d = new Date(ts);
+  const date = new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
+    timeZone: TZ,
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(d);
+  const time = new Intl.DateTimeFormat("en-GB", {
+    timeZone: TZ,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(d);
+  return `${date} ${time}`;
 }
