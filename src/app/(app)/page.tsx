@@ -33,20 +33,24 @@ export default async function HomePage() {
     <>
       <div className="mb-4">
         <h1 className="text-[24px] leading-tight font-bold">หน้าหลัก</h1>
-        <p className="mt-0.5 text-[13px] text-(--muted)">{thaiLongDate(today)}</p>
+        <p className="mt-0.5 text-[13px] text-(--muted)">
+          {thaiLongDate(today)}
+        </p>
       </div>
 
       {/* ปุ่มเริ่มบันทึก */}
       <div className="grid grid-cols-2 gap-3">
         <Link
           href="/ems/new"
-          className="flex flex-col items-start gap-3 rounded-2xl bg-linear-135 from-(--accent) to-[#ef5350] p-4 text-white shadow-[0_8px_20px_rgba(211,47,47,.28)] active:scale-[.98]"
+          className="flex flex-col items-start gap-3 rounded-2xl bg-linear-135 from-(--navy) to-(--blue-light) p-4 text-white shadow-[0_8px_20px_rgba(10,46,77,.28)] active:scale-[.98]"
         >
           <span className="flex size-11 items-center justify-center rounded-xl bg-white/20">
             <AmbulanceIcon className="size-7" />
           </span>
           <span>
-            <span className="block text-[22px] leading-none font-bold">EMS</span>
+            <span className="block text-[22px] leading-none font-bold">
+              EMS
+            </span>
             <span className="mt-1 block text-[12px] opacity-90">
               บันทึกออกเหตุฉุกเฉิน
             </span>
@@ -60,7 +64,9 @@ export default async function HomePage() {
             <RegistryIcon className="size-7" />
           </span>
           <span>
-            <span className="block text-[22px] leading-none font-bold">Refer</span>
+            <span className="block text-[22px] leading-none font-bold">
+              Refer
+            </span>
             <span className="mt-1 block text-[12px] text-(--muted)">
               บันทึกการส่งต่อผู้ป่วย
             </span>
@@ -128,10 +134,15 @@ export default async function HomePage() {
             { label: "Trauma", count: ems.trauma, color: "var(--accent)" },
             { label: "Non-trauma", count: ems.nonTrauma, color: "#1d5f99" },
           ].map((t) => (
-            <div key={t.label} className="rounded-xl bg-(--page-bg) px-3 py-2.5">
+            <div
+              key={t.label}
+              className="rounded-xl bg-(--page-bg) px-3 py-2.5"
+            >
               <div className="flex items-baseline justify-between">
                 <span className="text-[13px] font-semibold">{t.label}</span>
-                <span className="text-[22px] leading-none font-bold">{t.count}</span>
+                <span className="text-[22px] leading-none font-bold">
+                  {t.count}
+                </span>
               </div>
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white">
                 <div
@@ -163,7 +174,9 @@ export default async function HomePage() {
               <span className="mt-1.5 text-[22px] leading-none font-bold">
                 {ems.severity[t.key] ?? 0}
               </span>
-              <span className="mt-1 text-[11.5px] text-(--muted)">{t.label}</span>
+              <span className="mt-1 text-[11.5px] text-(--muted)">
+                {t.label}
+              </span>
             </div>
           ))}
         </div>

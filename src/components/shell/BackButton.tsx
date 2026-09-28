@@ -19,7 +19,7 @@ export default function BackButton() {
       onClick={() =>
         window.history.length > 1 ? router.back() : router.push("/")
       }
-      className="-ml-1.5 flex size-9 shrink-0 items-center justify-center rounded-full text-(--ink) active:bg-(--page-bg)"
+      className="-ml-1.5 flex size-9 shrink-0 items-center justify-center rounded-full text-white active:bg-white/15"
     >
       <ChevronLeftIcon className="size-6" />
     </button>

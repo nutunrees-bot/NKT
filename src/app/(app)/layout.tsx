@@ -10,8 +10,8 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
   return (
     <div className="min-h-dvh">
-      {/* หัวแบบย่อ — โลโก้ + ชื่อแอป · รหัสเจ้าหน้าที่ย้ายไปอยู่แท็บโปรไฟล์ */}
-      <header className="sticky top-0 z-20 border-b border-(--line) bg-white/95 pt-[env(safe-area-inset-top)] backdrop-blur">
+      {/* หัวแบบย่อ (navy + ขอบเขียวสะท้อนแสงแบบเดิม) — โลโก้ + ชื่อแอป · รหัสเจ้าหน้าที่ย้ายไปอยู่แท็บโปรไฟล์ */}
+      <header className="sticky top-0 z-20 border-b-4 border-(--hivis) bg-linear-135 from-(--navy) to-(--blue-light) pt-[env(safe-area-inset-top)] text-white shadow-[0_2px_8px_rgba(0,0,0,.15)]">
         <div className="mx-auto flex h-14 max-w-[640px] items-center justify-between gap-3 px-4">
           <div className="flex min-w-0 items-center gap-1">
             <BackButton />
@@ -23,10 +23,8 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
                 className="size-9 shrink-0 rounded-full object-cover"
               />
               <span className="min-w-0 leading-tight">
-                <span className="block text-[15px] font-bold text-(--ink)">
-                  NKT Rescue
-                </span>
-                <span className="block truncate text-[11px] text-(--muted)">
+                <span className="block text-[15px] font-bold">NKT Rescue</span>
+                <span className="block truncate text-[11px] opacity-90">
                   ER รพร.นครไทย
                 </span>
               </span>
@@ -34,7 +32,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           </div>
           <Link
             href="/profile"
-            className="shrink-0 rounded-full bg-(--page-bg) px-3 py-1.5 text-[12px] font-medium text-(--muted)"
+            className="shrink-0 rounded-full bg-white/15 px-3 py-1.5 text-[12px] font-medium text-white"
           >
             {session.code}
           </Link>

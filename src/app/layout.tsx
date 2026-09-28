@@ -21,7 +21,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   // ให้ env(safe-area-inset-bottom) มีค่า — แถบเมนูล่างจะได้ไม่จมใต้ขีด home ของ iPhone
   viewportFit: "cover",
-  themeColor: "#ffffff",
+  themeColor: "#0a2e4d",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

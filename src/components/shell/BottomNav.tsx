@@ -85,7 +85,7 @@ export default function BottomNav() {
                     className="group -mt-7 flex flex-col items-center gap-1 pb-2"
                   >
                     <span
-                      className={`flex size-[60px] items-center justify-center rounded-full border-4 border-(--page-bg) text-white shadow-[0_6px_16px_rgba(211,47,47,.35)] transition group-active:scale-95 ${
+                      className={`flex size-[60px] items-center justify-center rounded-full border-4 border-(--page-bg) text-white shadow-[0_6px_16px_rgba(20,106,168,.35)] transition group-active:scale-95 ${
                         active ? "bg-(--accent-dark)" : "bg-(--accent)"
                       }`}
                     >

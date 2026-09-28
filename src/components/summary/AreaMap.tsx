@@ -64,7 +64,7 @@ export default function AreaMap({
         />
       ))}
 
-      <circle cx={cx} cy={cy} r={44} fill="#d32f2f" />
+      <circle cx={cx} cy={cy} r={44} fill="#0a2e4d" />
       <text
         x={cx}
         y={cy - 3}
@@ -75,7 +75,7 @@ export default function AreaMap({
       >
         🚑 ER
       </text>
-      <text x={cx} y={cy + 15} textAnchor="middle" fontSize={10.5} fill="#ffe3e3">
+      <text x={cx} y={cy + 15} textAnchor="middle" fontSize={10.5} fill="#cfe3f5">
         รพ.นครไทย
       </text>
 

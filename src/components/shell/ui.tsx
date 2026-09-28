@@ -63,13 +63,17 @@ export function FilterChips({ items }: { items: ChipItem[] }) {
           scroll={false}
           className={`shrink-0 rounded-full px-3.5 py-1.5 text-[13px] font-medium whitespace-nowrap transition ${
             c.active
-              ? "bg-(--accent) text-white shadow-[0_2px_8px_rgba(211,47,47,.3)]"
+              ? "bg-(--accent) text-white shadow-[0_2px_8px_rgba(20,106,168,.3)]"
               : "border border-(--line) bg-white text-(--ink)"
           }`}
         >
           {c.label}
           {c.count !== undefined && (
-            <span className={c.active ? "ml-1.5 opacity-90" : "ml-1.5 text-(--muted)"}>
+            <span
+              className={
+                c.active ? "ml-1.5 opacity-90" : "ml-1.5 text-(--muted)"
+              }
+            >
               {c.count}
             </span>
           )}
@@ -152,9 +156,13 @@ export function CaseCard({
     >
       <div className="flex gap-3 px-4 pt-3.5 pb-3">
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[15.5px] font-bold text-(--ink)">{title}</div>
+          <div className="truncate text-[15.5px] font-bold text-(--ink)">
+            {title}
+          </div>
           {meta && (
-            <div className="mt-0.5 truncate text-[12.5px] text-(--muted)">{meta}</div>
+            <div className="mt-0.5 truncate text-[12.5px] text-(--muted)">
+              {meta}
+            </div>
           )}
           {tags && <div className="mt-2 flex flex-wrap gap-1.5">{tags}</div>}
         </div>
@@ -167,7 +175,9 @@ export function CaseCard({
                   {big}
                 </div>
                 {bigLabel && (
-                  <div className="mt-0.5 text-[11px] text-(--muted)">{bigLabel}</div>
+                  <div className="mt-0.5 text-[11px] text-(--muted)">
+                    {bigLabel}
+                  </div>
                 )}
               </div>
             )}
