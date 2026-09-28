@@ -61,6 +61,8 @@ export type EmsFormValues = {
   severity: string;
   trauma_type: string;
   scene_status: string;
+  handover_with: string;
+  handover_point: string;
 
   t_received: string;
   t_dispatch: string;
@@ -141,6 +143,8 @@ export function emptyEmsForm(incidentDate: string): EmsFormValues {
     severity: "",
     trauma_type: "",
     scene_status: "",
+    handover_with: "",
+    handover_point: "",
     t_received: "",
     t_dispatch: "",
     t_depart_station: "",

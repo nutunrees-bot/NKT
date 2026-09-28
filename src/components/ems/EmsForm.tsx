@@ -38,6 +38,7 @@ import {
   NATIONALITIES,
   OUTCOMES,
   RECEIVED_FROM,
+  HANDOVER_WITH,
   SCENE_STATUSES,
   SEVERITIES,
   SHIFTS,
@@ -129,7 +130,10 @@ export default function EmsForm({
         : undefined,
       onOtherTextChange: otherField
         ? (v: string) =>
-            set(otherField as keyof EmsFormValues, v as EmsFormValues[keyof EmsFormValues])
+            set(
+              otherField as keyof EmsFormValues,
+              v as EmsFormValues[keyof EmsFormValues],
+            )
         : undefined,
     };
   }
@@ -313,6 +317,23 @@ export default function EmsForm({
             onChange={(v) => set("scene_status", v)}
           />
         </Field>
+        <Field label="สับถ่ายผู้ป่วยกับ" hint="ไม่ได้สับถ่าย ไม่ต้องเลือก">
+          <ChipGroup
+            options={HANDOVER_WITH}
+            value={values.handover_with}
+            onChange={(v) => set("handover_with", v)}
+          />
+        </Field>
+        {values.handover_with && (
+          <Field label="จุดสับถ่าย">
+            <input
+              value={values.handover_point}
+              onChange={(e) => set("handover_point", e.target.value)}
+              placeholder="เช่น หน้า รร.แก่งหว้า"
+              className={inputClass}
+            />
+          </Field>
+        )}
       </Section>
 
       <Section title="เวลาปฏิบัติการ">
@@ -406,7 +427,8 @@ export default function EmsForm({
               onChange={(e) => {
                 set("patient_national_id", e.target.value);
                 // กรอกเลขบัตรแล้วติ๊ก "คนไทย" ให้ ถ้ายังไม่ได้เลือกสัญชาติเอง
-                if (e.target.value && !values.nationality) set("nationality", "คนไทย");
+                if (e.target.value && !values.nationality)
+                  set("nationality", "คนไทย");
               }}
               className={inputClass}
             />

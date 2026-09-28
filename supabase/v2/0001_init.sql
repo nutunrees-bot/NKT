@@ -95,7 +95,7 @@ create table public.ems_cases (
   staff_driver    text,
 
   -- เหตุการณ์ ---------------------------------------------------------------
-  received_from text check (received_from in ('1669','ER','วิทยุ')),
+  received_from text check (received_from in ('1669','ER','วิทยุ','แจ้งที่ฐาน')),
   incident_type text check (incident_type in ('พรบ','อุบัติเหตุ','ฉุกเฉิน')),
   incident_detail text,
   location      text,
@@ -103,6 +103,8 @@ create table public.ems_cases (
   severity      text check (severity in ('สีแดง','สีเหลือง','สีเขียว','สีขาว','สีดำ')),
   trauma_type   text check (trauma_type in ('Trauma','Non-Trauma')),
   scene_status  text check (scene_status in ('พบเหตุ','ไม่พบเหตุ','ไม่ประสงค์ รพ.')),
+  handover_with  text check (handover_with in ('ญาติ','กู้ภัย')),  -- สับถ่ายกับ (0003)
+  handover_point text,                                              -- จุดสับถ่าย (0003)
 
   -- เวลาปฏิบัติการ ----------------------------------------------------------
   t_received        time,

@@ -5,9 +5,15 @@
  */
 
 export const SHIFTS = ["เช้า", "บ่าย", "ดึก"] as const;
-export const RECEIVED_FROM = ["1669", "ER", "วิทยุ"] as const;
+export const RECEIVED_FROM = ["1669", "ER", "วิทยุ", "แจ้งที่ฐาน"] as const;
+/** สับถ่ายผู้ป่วยกับ — ว่าง = ไม่ได้สับถ่าย */
+export const HANDOVER_WITH = ["ญาติ", "กู้ภัย"] as const;
 export const INCIDENT_TYPES = ["พรบ", "อุบัติเหตุ", "ฉุกเฉิน"] as const;
-export const SCENE_STATUSES = ["พบเหตุ", "ไม่พบเหตุ", "ไม่ประสงค์ รพ."] as const;
+export const SCENE_STATUSES = [
+  "พบเหตุ",
+  "ไม่พบเหตุ",
+  "ไม่ประสงค์ รพ.",
+] as const;
 export const TRAUMA_TYPES = ["Trauma", "Non-Trauma"] as const;
 
 export const SEVERITIES = [
@@ -18,7 +24,11 @@ export const SEVERITIES = [
   { value: "สีดำ", className: "bg-(--sev-black) text-white" },
 ] as const;
 
-export const NATIONALITIES = ["คนไทย", "แรงงานต่างด้าว", "ชาวต่างชาติ"] as const;
+export const NATIONALITIES = [
+  "คนไทย",
+  "แรงงานต่างด้าว",
+  "ชาวต่างชาติ",
+] as const;
 
 export const INSURANCE_RIGHTS = [
   "บัตรทอง",
@@ -148,7 +158,16 @@ export const MULTI_GROUPS = {
     label: "การให้สารน้ำ",
     section: "treatment",
     otherField: "fluid_other",
-    options: ["No", "NSS", "RLS", "5%DN/2", "10%DN/2", "Acetar", "On locked", "Others"],
+    options: [
+      "No",
+      "NSS",
+      "RLS",
+      "5%DN/2",
+      "10%DN/2",
+      "Acetar",
+      "On locked",
+      "Others",
+    ],
   },
   splint: {
     label: "ดามกระดูก",
@@ -182,7 +201,10 @@ export const REFER_TEAMS = [
 ] as const;
 
 export const REFER_SEVERITIES = [
-  { value: "ระดับวิกฤต (ฉุกเฉินสีแดง)", className: "bg-(--sev-red) text-white" },
+  {
+    value: "ระดับวิกฤต (ฉุกเฉินสีแดง)",
+    className: "bg-(--sev-red) text-white",
+  },
   {
     value: "ระดับฉุกเฉิน (ฉุกเฉินสีเหลือง)",
     className: "bg-(--sev-yellow) text-[#5c4400]",

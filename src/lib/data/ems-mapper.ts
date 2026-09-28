@@ -58,6 +58,8 @@ export function rowToFormValues(row: Row): EmsFormValues {
     severity: s(row.severity),
     trauma_type: s(row.trauma_type),
     scene_status: s(row.scene_status),
+    handover_with: s(row.handover_with),
+    handover_point: s(row.handover_point),
 
     t_received: hhmm(row.t_received),
     t_dispatch: hhmm(row.t_dispatch),

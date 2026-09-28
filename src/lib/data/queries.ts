@@ -371,6 +371,8 @@ export type EmsRegisterRow = {
   initial_care_result: string | null;
   address_subdistrict: string | null;
   outcome: string | null;
+  handover_with: string | null;
+  handover_point: string | null;
 };
 
 /** เคส EMS ทั้งเดือน สำหรับทะเบียนรายเดือน (Excel) — เรียงวันที่ แล้วเหตุที่ */
@@ -378,7 +380,7 @@ export async function listEmsRegister(from: string, to: string) {
   const { data, error } = await db()
     .from("ems_cases")
     .select(
-      "incident_date, seq_no, op_no, shift, staff_provider1, staff_provider2, received_from, incident_type, scene_status, t_received, t_depart_station, t_arrive_scene, response_time_min, t_depart_scene, mile_out, mile_scene, patient_name, patient_hn, patient_age, severity, trauma_type, initial_care_result, address_subdistrict, outcome",
+      "incident_date, seq_no, op_no, shift, staff_provider1, staff_provider2, received_from, incident_type, scene_status, t_received, t_depart_station, t_arrive_scene, response_time_min, t_depart_scene, mile_out, mile_scene, patient_name, patient_hn, patient_age, severity, trauma_type, initial_care_result, address_subdistrict, outcome, handover_with, handover_point",
     )
     .gte("incident_date", from)
     .lte("incident_date", to)

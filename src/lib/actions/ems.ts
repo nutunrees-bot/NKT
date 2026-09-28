@@ -87,6 +87,9 @@ function baseRow(f: EmsFormValues) {
     severity: txt(f.severity),
     trauma_type: txt(f.trauma_type),
     scene_status: txt(f.scene_status),
+    handover_with: txt(f.handover_with),
+    // ไม่ได้สับถ่าย = ไม่เก็บจุดสับถ่ายค้างไว้
+    handover_point: f.handover_with ? txt(f.handover_point) : null,
 
     t_received: txt(f.t_received),
     t_dispatch: txt(f.t_dispatch),
@@ -186,11 +189,17 @@ export async function saveEmsCase(
       id = data.id as string;
     }
 
-    const [deathSignature, deathPhoto, palliativeSignature] = await Promise.all([
-      storeAttachment(id, "death-signature", values.death_signature),
-      storeAttachment(id, "death-photo", values.death_photo),
-      storeAttachment(id, "palliative-signature", values.palliative_signature),
-    ]);
+    const [deathSignature, deathPhoto, palliativeSignature] = await Promise.all(
+      [
+        storeAttachment(id, "death-signature", values.death_signature),
+        storeAttachment(id, "death-photo", values.death_photo),
+        storeAttachment(
+          id,
+          "palliative-signature",
+          values.palliative_signature,
+        ),
+      ],
+    );
 
     const { error: attachError } = await db()
       .from("ems_cases")

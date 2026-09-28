@@ -12,7 +12,7 @@ import { DEATH_AT_SCENE } from "@/lib/domain/options";
  *
  * หมายเหตุ: ชีตนี้คนละตัวกับชีต EMS_YYYY-MM ของระบบ GAS (ที่ตัวนำเข้า
  * legacy-sheet.ts อ่าน) — ผังคอลัมน์ถอดจากแท็บ "ก.ย.69" ของไฟล์ EMS69 จริง (A→CL)
- * ช่องที่ระบบใหม่ไม่มีข้อมูล (แจ้งที่ฐาน, หมายเหตุ, สับถ่าย, จุดสับถ่าย) คงคอลัมน์ไว้แต่เว้นว่าง
+ * ช่องที่ระบบใหม่ไม่มีข้อมูล (หมายเหตุ) คงคอลัมน์ไว้แต่เว้นว่าง
  */
 
 export type RegisterCell = string | number | null;
@@ -107,7 +107,6 @@ export const REGISTER_COLUMNS: RegisterCol[] = [
       label: src,
       width: src === "แจ้งที่ฐาน" ? 8 : 6,
       tally: true,
-      // ระบบใหม่ยังไม่มีตัวเลือก "แจ้งที่ฐาน" — ช่องนี้จะว่างเสมอ
       value: (r) => one(r.received_from === src),
     }),
   ),
@@ -194,9 +193,9 @@ export const REGISTER_COLUMNS: RegisterCol[] = [
     label: w,
     width: 6,
     tally: true,
-    value: blank,
+    value: (r) => one(r.handover_with === w),
   })),
-  { label: "จุดสับถ่าย", width: 14, value: blank },
+  { label: "จุดสับถ่าย", width: 14, value: (r) => r.handover_point },
 
   // ที่เกิดเหตุ × ระดับความรุนแรง (ชีตเดิมมี 4 ชุดหัวเดียวกัน เรียง Emergency/Urgency/Non-urgent/Death)
   ...LEVELS.flatMap(({ level }) =>
