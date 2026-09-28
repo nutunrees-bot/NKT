@@ -148,7 +148,7 @@ export default function EmsForm({
         return;
       }
       if (!isEdit) localStorage.removeItem(DRAFT_KEY);
-      router.push("/");
+      router.push("/cases");
       router.refresh();
     });
   }

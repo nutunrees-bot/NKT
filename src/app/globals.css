@@ -16,10 +16,18 @@
   --hivis-soft: #eef8e0;
 
   --ink: #1f2430;
-  --muted: #5f6b66;
-  --line: #dbe4de;
-  --page-bg: #f1f6f3;
+  --muted: #6b7280;
+  --line: #e3e6ea;
+  --page-bg: #f3f4f6;
   --card: #ffffff;
+
+  /* สีหลักของเปลือกแอป (แถบล่าง/ชิปกรอง/ปุ่มหลัก) — แดงกาชาด ER/กู้ภัย */
+  --accent: #d32f2f;
+  --accent-dark: #b71c1c;
+  --accent-soft: #fdecec;
+  --card-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 14px rgba(16, 24, 40, 0.06);
+  /* ความสูงแถบเมนูล่าง — เนื้อหาต้องเว้นที่ท้ายหน้าเท่านี้ ไม่งั้นปุ่มบันทึกโดนบัง */
+  --tabbar-h: 68px;
 
   /* ระดับความรุนแรง 5 สีตามมาตรฐานคัดแยก — ห้ามเปลี่ยนความหมายสี */
   --sev-red: #e53935;
@@ -51,4 +59,12 @@ input,
 select,
 textarea {
   font-size: 16px;
+}
+
+/* แถวชิปกรองเลื่อนแนวนอนได้ แต่ไม่ต้องโชว์ scrollbar */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

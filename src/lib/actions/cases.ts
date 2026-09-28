@@ -18,12 +18,12 @@ export async function deleteEmsCase(id: string) {
   await requireSession();
   const { error } = await db().from("ems_cases").delete().eq("id", id);
   if (error) throw new Error(`ลบเคสไม่สำเร็จ: ${error.message}`);
-  revalidatePath("/");
+  revalidatePath("/", "layout");
 }
 
 export async function deleteReferCase(id: string) {
   await requireSession();
   const { error } = await db().from("refer_cases").delete().eq("id", id);
   if (error) throw new Error(`ลบเคสไม่สำเร็จ: ${error.message}`);
-  revalidatePath("/");
+  revalidatePath("/", "layout");
 }

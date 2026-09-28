@@ -52,7 +52,7 @@ export default function ReferForm({
         setError(result.error);
         return;
       }
-      router.push("/");
+      router.push("/cases");
       router.refresh();
     });
   }

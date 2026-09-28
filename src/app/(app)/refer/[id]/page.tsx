@@ -15,7 +15,7 @@ export default async function EditReferPage({
     <>
       <div className="mb-3.5 flex items-center gap-2.5">
         <Link
-          href="/"
+          href="/cases"
           className="rounded-lg border border-(--line) bg-white px-3.5 py-2 text-sm"
         >
           ← กลับ

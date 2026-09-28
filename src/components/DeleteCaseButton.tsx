@@ -6,10 +6,12 @@ export default function DeleteCaseButton({
   id,
   action,
   label = "ลบ",
+  className = "rounded-lg border border-[#f6cfcb] bg-(--danger-soft) px-3 py-2 text-[12.5px] text-(--danger) disabled:opacity-50",
 }: {
   id: string;
   action: (id: string) => Promise<void>;
   label?: string;
+  className?: string;
 }) {
   const [pending, startTransition] = useTransition();
 
@@ -23,7 +25,7 @@ export default function DeleteCaseButton({
           await action(id);
         });
       }}
-      className="rounded-lg border border-[#f6cfcb] bg-(--danger-soft) px-3 py-2 text-[12.5px] text-(--danger) disabled:opacity-50"
+      className={className}
     >
       {pending ? "กำลังลบ..." : label}
     </button>

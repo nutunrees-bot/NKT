@@ -55,6 +55,44 @@ export function thaiDate(iso: string | null | undefined): string {
   return `${m[3]}/${m[2]}/${Number(m[1]) + 543}`;
 }
 
+export type ShiftName = "เช้า" | "บ่าย" | "ดึก";
+
+/**
+ * เวรของเหตุ — ดูจากเวลารับแจ้งก่อน (เช้า 08:00–15:59, บ่าย 16:00–23:59,
+ * ดึก 00:00–07:59) ถ้าไม่ได้กรอกเวลาค่อยใช้ช่อง "เวร" ที่เจ้าหน้าที่เลือกไว้
+ */
+export function shiftOf(
+  time: string | null | undefined,
+  storedShift?: string | null,
+): ShiftName | null {
+  const m = time ? /^(\d{1,2}):/.exec(time) : null;
+  if (m) {
+    const h = Number(m[1]);
+    if (h >= 8 && h < 16) return "เช้า";
+    if (h >= 16) return "บ่าย";
+    return "ดึก";
+  }
+  if (storedShift === "เช้า" || storedShift === "บ่าย" || storedShift === "ดึก")
+    return storedShift;
+  return null;
+}
+
+/** "2026-09-28" -> "วันจันทร์ที่ 28 กันยายน พ.ศ. 2569" */
+export function thaiLongDate(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!m) return iso;
+  // เที่ยงวัน UTC = วันเดียวกันในเวลาไทยเสมอ ไม่เลื่อนวัน
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12));
+  return new Intl.DateTimeFormat("th-TH", { dateStyle: "full", timeZone: TZ }).format(d);
+}
+
+/** "2026-09" -> "2026-08" / "2026-10" */
+export function shiftMonth(ym: string, delta: number): string {
+  const [y, m] = ym.split("-").map(Number);
+  const total = y * 12 + (m - 1) + delta;
+  return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, "0")}`;
+}
+
 /** "14:05:00" -> "14:05" */
 export function hm(time: string | null | undefined): string {
   return time ? time.slice(0, 5) : "";

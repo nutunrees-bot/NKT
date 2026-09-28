@@ -1,238 +1,188 @@
 import Link from "next/link";
-import DeleteCaseButton from "@/components/DeleteCaseButton";
-import { deleteEmsCase, deleteReferCase } from "@/lib/actions/cases";
-import { listEmsCases, listReferCases } from "@/lib/data/queries";
-import { thaiDate, todayISO } from "@/lib/domain/datetime";
+import { getDaySummary } from "@/lib/data/queries";
+import { thaiLongDate, todayISO } from "@/lib/domain/datetime";
+import { Card } from "@/components/shell/ui";
+import {
+  AmbulanceIcon,
+  ChevronRightIcon,
+  RegistryIcon,
+} from "@/components/shell/icons";
 
-function one(v: string | string[] | undefined, fallback: string) {
-  return (Array.isArray(v) ? v[0] : v) || fallback;
-}
+const SHIFT_TILES = [
+  { key: "เช้า", short: "ช", range: "08:00–15:59" },
+  { key: "บ่าย", short: "บ", range: "16:00–23:59" },
+  { key: "ดึก", short: "ด", range: "00:00–07:59" },
+] as const;
 
-function accountCode(row: { accounts?: unknown }) {
-  const a = Array.isArray(row.accounts) ? row.accounts[0] : row.accounts;
-  return (a as { code?: string } | undefined)?.code ?? "-";
-}
+const TRIAGE = [
+  { key: "สีแดง", label: "แดง", color: "var(--sev-red)" },
+  { key: "สีเหลือง", label: "เหลือง", color: "var(--sev-yellow)" },
+  { key: "สีเขียว", label: "เขียว", color: "var(--sev-green)" },
+  { key: "สีดำ", label: "ดำ", color: "var(--sev-black)" },
+] as const;
 
-export default async function HomePage({ searchParams }: PageProps<"/">) {
-  const sp = await searchParams;
+/** หน้าหลัก — ปุ่มเริ่มบันทึก EMS/Refer + สรุปการออกเหตุของวันนี้ */
+export default async function HomePage() {
   const today = todayISO();
-  const eFrom = one(sp.e_from, today);
-  const eTo = one(sp.e_to, today);
-  const rFrom = one(sp.r_from, today);
-  const rTo = one(sp.r_to, today);
-
-  const [emsCases, referCases] = await Promise.all([
-    listEmsCases(eFrom, eTo),
-    listReferCases(rFrom, rTo),
-  ]);
+  const { ems, refer } = await getDaySummary(today);
+  const white = ems.severity["สีขาว"] ?? 0;
+  const noSeverity =
+    ems.total - Object.values(ems.severity).reduce((a, b) => a + b, 0);
 
   return (
     <>
-      <div className="mt-5 grid grid-cols-2 gap-3.5">
+      <div className="mb-4">
+        <h1 className="text-[24px] leading-tight font-bold">หน้าหลัก</h1>
+        <p className="mt-0.5 text-[13px] text-(--muted)">{thaiLongDate(today)}</p>
+      </div>
+
+      {/* ปุ่มเริ่มบันทึก */}
+      <div className="grid grid-cols-2 gap-3">
         <Link
           href="/ems/new"
-          className="rounded-2xl border-2 border-[#ffcdd2] bg-(--card) px-3 py-7 text-center shadow-[0_2px_6px_rgba(0,0,0,.05)] active:scale-[.97]"
+          className="flex flex-col items-start gap-3 rounded-2xl bg-linear-135 from-(--accent) to-[#ef5350] p-4 text-white shadow-[0_8px_20px_rgba(211,47,47,.28)] active:scale-[.98]"
         >
-          <div className="mb-2 text-[42px]">🚑</div>
-          <h2 className="text-lg font-bold">EMS</h2>
-          <p className="text-[12px] text-(--muted)">
-            บันทึกปฏิบัติการรับ-ส่งผู้ป่วยฉุกเฉิน
-          </p>
+          <span className="flex size-11 items-center justify-center rounded-xl bg-white/20">
+            <AmbulanceIcon className="size-7" />
+          </span>
+          <span>
+            <span className="block text-[22px] leading-none font-bold">EMS</span>
+            <span className="mt-1 block text-[12px] opacity-90">
+              บันทึกออกเหตุฉุกเฉิน
+            </span>
+          </span>
         </Link>
         <Link
           href="/refer/new"
-          className="rounded-2xl border-2 border-[#bbdefb] bg-(--card) px-3 py-7 text-center shadow-[0_2px_6px_rgba(0,0,0,.05)] active:scale-[.97]"
+          className="flex flex-col items-start gap-3 rounded-2xl border-2 border-(--accent-soft) bg-white p-4 text-(--ink) shadow-(--card-shadow) active:scale-[.98]"
         >
-          <div className="mb-2 text-[42px]">👩‍⚕️</div>
-          <h2 className="text-lg font-bold">REFER</h2>
-          <p className="text-[12px] text-(--muted)">บันทึกการส่งต่อผู้ป่วย</p>
+          <span className="flex size-11 items-center justify-center rounded-xl bg-(--accent-soft) text-(--accent)">
+            <RegistryIcon className="size-7" />
+          </span>
+          <span>
+            <span className="block text-[22px] leading-none font-bold">Refer</span>
+            <span className="mt-1 block text-[12px] text-(--muted)">
+              บันทึกการส่งต่อผู้ป่วย
+            </span>
+          </span>
         </Link>
       </div>
 
-      <section className="mt-4 rounded-2xl border border-(--line) bg-(--card) p-4">
-        <div className="mb-3 flex items-center justify-between gap-2 border-b border-(--line) pb-2">
-          <h3 className="text-sm font-semibold text-(--blue)">
-            รายการเคส EMS (ดู / แก้ไข)
-          </h3>
-          <Link
-            href="/print/als/blank"
-            target="_blank"
-            className="shrink-0 text-[12px] text-(--muted) underline"
-          >
-            พิมพ์ ALS เปล่า
-          </Link>
+      {/* ยอดวันนี้ */}
+      <Card className="mt-4 p-4">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <div className="text-[13px] text-(--muted)">วันนี้ออกเหตุ</div>
+            <div className="mt-1 flex items-baseline gap-1.5">
+              <span className="text-[40px] leading-none font-bold text-(--accent)">
+                {ems.total}
+              </span>
+              <span className="text-[14px] text-(--muted)">ครั้ง</span>
+            </div>
+            {ems.notFound > 0 && (
+              <div className="mt-1 text-[12px] text-(--muted)">
+                (ไม่พบเหตุ {ems.notFound})
+              </div>
+            )}
+          </div>
+          <div className="text-right">
+            <div className="text-[13px] text-(--muted)">Refer วันนี้</div>
+            <div className="mt-1 text-[28px] leading-none font-bold">
+              {refer.total}
+            </div>
+          </div>
         </div>
-        <DateRangeForm
-          from={eFrom}
-          to={eTo}
-          fromName="e_from"
-          toName="e_to"
-          preserve={{ r_from: rFrom, r_to: rTo }}
-        />
 
-        {emsCases.length === 0 ? (
-          <p className="py-4 text-center text-[13px] text-(--muted)">
-            ไม่พบเคสในช่วงวันที่ที่เลือก
+        {/* เวร ช/บ/ด */}
+        <h2 className="mt-5 mb-2 text-[13px] font-semibold text-(--muted)">
+          แยกตามเวร
+        </h2>
+        <div className="grid grid-cols-3 gap-2">
+          {SHIFT_TILES.map((s) => (
+            <div key={s.key} className="rounded-xl bg-(--page-bg) px-3 py-2.5">
+              <div className="flex items-center gap-1.5 text-[13px] font-semibold">
+                <span className="flex size-5 items-center justify-center rounded-full bg-white text-[11px] text-(--accent)">
+                  {s.short}
+                </span>
+                {s.key}
+              </div>
+              <div className="mt-1 text-[24px] leading-none font-bold">
+                {ems.byShift[s.key]}
+              </div>
+              <div className="mt-1 text-[10.5px] text-(--muted)">{s.range}</div>
+            </div>
+          ))}
+        </div>
+        {ems.byShift["ไม่ระบุ"] > 0 && (
+          <p className="mt-1.5 text-[11.5px] text-(--muted)">
+            ไม่ได้กรอกเวลารับแจ้ง/เวร {ems.byShift["ไม่ระบุ"]} เคส
           </p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {emsCases.map((c) => (
-              <li
-                key={c.id}
-                className="rounded-xl border border-(--line) bg-[#fafcfb] px-3 py-2.5"
-              >
-                <div className="flex items-center justify-between gap-2 text-[13.5px] font-bold text-(--navy)">
-                  <span>
-                    <span className="mr-1 inline-block min-w-[22px] text-(--hivis-dark)">
-                      {c.seq_no}.
-                    </span>
-                    {c.patient_name || "(ไม่ระบุชื่อ)"}
-                  </span>
-                  <span className="shrink-0 text-[12px] font-medium text-(--muted)">
-                    {thaiDate(c.incident_date)}
-                  </span>
-                </div>
-                <div className="mt-1 text-[12px] text-(--muted)">
-                  ระดับ: {c.severity || "-"} | ผลการรักษา:{" "}
-                  {c.outcome || "-"} | ผู้บันทึก: {accountCode(c)}
-                </div>
-                <div className="mt-2 flex gap-2">
-                  <Link
-                    href={`/ems/${c.id}`}
-                    className="flex-1 rounded-lg border border-(--blue) bg-[#eaf3fb] px-3 py-2 text-center text-[12.5px] font-semibold text-(--blue)"
-                  >
-                    แก้ไข
-                  </Link>
-                  <Link
-                    href={`/print/als/${c.id}`}
-                    target="_blank"
-                    className="flex-1 rounded-lg border border-(--hivis-dark) bg-(--hivis-soft) px-3 py-2 text-center text-[12.5px] font-semibold text-(--hivis-dark)"
-                  >
-                    พิมพ์ ALS
-                  </Link>
-                  <DeleteCaseButton
-                    id={c.id}
-                    action={deleteEmsCase}
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
         )}
-      </section>
 
-      <section className="mt-4 rounded-2xl border border-(--line) bg-(--card) p-4">
-        <h3 className="mb-3 border-b border-(--line) pb-2 text-sm font-semibold text-(--blue)">
-          รายการเคส REFER (ดู / แก้ไข)
-        </h3>
-        <DateRangeForm
-          from={rFrom}
-          to={rTo}
-          fromName="r_from"
-          toName="r_to"
-          preserve={{ e_from: eFrom, e_to: eTo }}
-        />
+        {/* Trauma / Non-trauma */}
+        <h2 className="mt-5 mb-2 text-[13px] font-semibold text-(--muted)">
+          ประเภท
+        </h2>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { label: "Trauma", count: ems.trauma, color: "var(--accent)" },
+            { label: "Non-trauma", count: ems.nonTrauma, color: "#1d5f99" },
+          ].map((t) => (
+            <div key={t.label} className="rounded-xl bg-(--page-bg) px-3 py-2.5">
+              <div className="flex items-baseline justify-between">
+                <span className="text-[13px] font-semibold">{t.label}</span>
+                <span className="text-[22px] leading-none font-bold">{t.count}</span>
+              </div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${ems.total ? (t.count / ems.total) * 100 : 0}%`,
+                    background: t.color,
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
 
-        {referCases.length === 0 ? (
-          <p className="py-4 text-center text-[13px] text-(--muted)">
-            ไม่พบเคสในช่วงวันที่ที่เลือก
+        {/* สีคัดแยก */}
+        <h2 className="mt-5 mb-2 text-[13px] font-semibold text-(--muted)">
+          ระดับความรุนแรง (สีคัดแยก)
+        </h2>
+        <div className="grid grid-cols-4 gap-2">
+          {TRIAGE.map((t) => (
+            <div
+              key={t.key}
+              className="flex flex-col items-center rounded-xl bg-(--page-bg) py-2.5"
+            >
+              <span
+                className="size-3.5 rounded-full ring-2 ring-white"
+                style={{ background: t.color }}
+              />
+              <span className="mt-1.5 text-[22px] leading-none font-bold">
+                {ems.severity[t.key] ?? 0}
+              </span>
+              <span className="mt-1 text-[11.5px] text-(--muted)">{t.label}</span>
+            </div>
+          ))}
+        </div>
+        {(white > 0 || noSeverity > 0) && (
+          <p className="mt-1.5 text-[11.5px] text-(--muted)">
+            {white > 0 && `สีขาว ${white} เคส`}
+            {white > 0 && noSeverity > 0 && " · "}
+            {noSeverity > 0 && `ไม่ระบุสี ${noSeverity} เคส`}
           </p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {referCases.map((c) => (
-              <li
-                key={c.id}
-                className="rounded-xl border border-(--line) bg-[#fafcfb] px-3 py-2.5"
-              >
-                <div className="flex items-center justify-between gap-2 text-[13.5px] font-bold text-(--navy)">
-                  <span>{c.patient_name || "(ไม่ระบุชื่อ)"}</span>
-                  <span className="shrink-0 text-[12px] font-medium text-(--muted)">
-                    {thaiDate(c.refer_date)}
-                  </span>
-                </div>
-                <div className="mt-1 text-[12px] text-(--muted)">
-                  ระดับ: {c.severity || "-"} | ส่งต่อ:{" "}
-                  {c.refer_hospital || "-"} | ผู้บันทึก:{" "}
-                  {accountCode(c)}
-                </div>
-                <div className="mt-2 flex gap-2">
-                  <Link
-                    href={`/refer/${c.id}`}
-                    className="flex-1 rounded-lg border border-(--blue) bg-[#eaf3fb] px-3 py-2 text-center text-[12.5px] font-semibold text-(--blue)"
-                  >
-                    แก้ไข
-                  </Link>
-                  <Link
-                    href={`/print/refer/${c.id}`}
-                    target="_blank"
-                    className="flex-1 rounded-lg border border-(--hivis-dark) bg-(--hivis-soft) px-3 py-2 text-center text-[12.5px] font-semibold text-(--hivis-dark)"
-                  >
-                    🖨️ พิมพ์ Refer
-                  </Link>
-                  <DeleteCaseButton
-                    id={c.id}
-                    action={deleteReferCase}
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
         )}
-      </section>
-    </>
-  );
-}
+      </Card>
 
-/** ฟอร์ม GET ธรรมดา — ช่วงวันที่อยู่ใน URL แชร์ลิงก์/กดย้อนกลับได้ */
-function DateRangeForm({
-  from,
-  to,
-  fromName,
-  toName,
-  preserve,
-}: {
-  from: string;
-  to: string;
-  fromName: string;
-  toName: string;
-  /** ช่วงวันที่ของอีกส่วนหนึ่ง — ไม่งั้นกดค้นส่วนนี้แล้วอีกส่วนเด้งกลับเป็นวันนี้ */
-  preserve: Record<string, string>;
-}) {
-  return (
-    <form className="mb-2.5">
-      {Object.entries(preserve).map(([name, value]) => (
-        <input key={name} type="hidden" name={name} value={value} />
-      ))}
-      <div className="grid grid-cols-2 gap-2.5">
-        <label className="block">
-          <span className="mb-1 block text-[13px] text-(--muted)">
-            จากวันที่
-          </span>
-          <input
-            type="date"
-            name={fromName}
-            defaultValue={from}
-            className="w-full rounded-lg border border-(--line) bg-white px-2.5 py-2"
-          />
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-[13px] text-(--muted)">
-            ถึงวันที่
-          </span>
-          <input
-            type="date"
-            name={toName}
-            defaultValue={to}
-            className="w-full rounded-lg border border-(--line) bg-white px-2.5 py-2"
-          />
-        </label>
-      </div>
-      <button
-        type="submit"
-        className="mt-2 mb-2.5 w-full rounded-lg border border-(--blue) bg-white px-3 py-2.5 text-sm font-semibold text-(--blue)"
+      <Link
+        href="/cases"
+        className="mt-3 flex items-center justify-between rounded-2xl bg-white px-4 py-3.5 text-[14px] font-semibold shadow-(--card-shadow)"
       >
-        แสดงรายการ
-      </button>
-    </form>
+        ดูรายการเคสวันนี้
+        <ChevronRightIcon className="size-5 text-(--muted)" />
+      </Link>
+    </>
   );
 }

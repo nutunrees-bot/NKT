@@ -46,6 +46,6 @@ export async function saveReferCase(
 
   if (error) return { error: `บันทึกไม่สำเร็จ: ${error.message}` };
 
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return {};
 }

@@ -1,5 +1,6 @@
 import { db } from "@/lib/supabase/admin";
 import type { Lookups } from "@/lib/domain/lookups";
+import { shiftOf, type ShiftName } from "@/lib/domain/datetime";
 
 type AccountRef = { code: string } | { code: string }[] | null;
 
@@ -8,9 +9,15 @@ export type EmsListItem = {
   incident_date: string;
   seq_no: number;
   patient_name: string | null;
+  patient_hn: string | null;
+  patient_age: number | null;
+  patient_national_id: string | null;
   severity: string | null;
+  trauma_type: string | null;
   outcome: string | null;
   scene_status: string | null;
+  address_subdistrict: string | null;
+  t_received: string | null;
   accounts: AccountRef;
 };
 
@@ -19,13 +26,18 @@ export type ReferListItem = {
   refer_date: string;
   patient_name: string | null;
   patient_hn: string | null;
+  patient_age: number | null;
   severity: string | null;
+  trauma_type: string | null;
   refer_hospital: string | null;
   accounts: AccountRef;
 };
 
 const EMS_LIST_COLUMNS =
-  "id, incident_date, seq_no, patient_name, severity, outcome, scene_status, accounts:created_by (code)";
+  "id, incident_date, seq_no, patient_name, patient_hn, patient_age, patient_national_id, severity, trauma_type, outcome, scene_status, address_subdistrict, t_received, accounts:created_by (code)";
+
+const REFER_LIST_COLUMNS =
+  "id, refer_date, patient_name, patient_hn, patient_age, severity, trauma_type, refer_hospital, accounts:created_by (code)";
 
 export async function listEmsCases(from: string, to: string) {
   const { data, error } = await db()
@@ -43,9 +55,7 @@ export async function listEmsCases(from: string, to: string) {
 export async function listReferCases(from: string, to: string) {
   const { data, error } = await db()
     .from("refer_cases")
-    .select(
-      "id, refer_date, patient_name, patient_hn, severity, refer_hospital, accounts:created_by (code)",
-    )
+    .select(REFER_LIST_COLUMNS)
     .gte("refer_date", from)
     .lte("refer_date", to)
     .order("refer_date", { ascending: false })
@@ -53,6 +63,115 @@ export async function listReferCases(from: string, to: string) {
 
   if (error) throw new Error(`โหลดรายการ REFER ไม่สำเร็จ: ${error.message}`);
   return (data ?? []) as unknown as ReferListItem[];
+}
+
+/**
+ * ค้นทะเบียนผู้ป่วยด้วย HN / ชื่อ (EMS ค้นเลขบัตรประชาชนได้ด้วย)
+ * ไม่ใส่คำค้น = เคสล่าสุด · ตัดอักขระที่มีความหมายใน filter ของ PostgREST ทิ้ง
+ * กันคนพิมพ์ , ( ) แล้ว filter พัง/ถูกแทรกเงื่อนไข
+ */
+export async function searchCases(query: string, limit = 50) {
+  const q = query.replace(/[,()*%\\:"']/g, " ").trim();
+
+  let ems = db().from("ems_cases").select(EMS_LIST_COLUMNS);
+  let refer = db().from("refer_cases").select(REFER_LIST_COLUMNS);
+
+  if (q) {
+    const like = `*${q}*`;
+    ems = ems.or(
+      `patient_name.ilike.${like},patient_hn.ilike.${like},patient_national_id.ilike.${like}`,
+    );
+    refer = refer.or(`patient_name.ilike.${like},patient_hn.ilike.${like}`);
+  }
+
+  const [e, r] = await Promise.all([
+    ems
+      .order("incident_date", { ascending: false })
+      .order("seq_no", { ascending: false })
+      .limit(limit),
+    refer
+      .order("refer_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(limit),
+  ]);
+
+  if (e.error) throw new Error(`ค้นทะเบียน EMS ไม่สำเร็จ: ${e.error.message}`);
+  if (r.error) throw new Error(`ค้นทะเบียน REFER ไม่สำเร็จ: ${r.error.message}`);
+
+  return {
+    ems: (e.data ?? []) as unknown as EmsListItem[],
+    refer: (r.data ?? []) as unknown as ReferListItem[],
+  };
+}
+
+/** จำนวนเคสทั้งหมดในระบบ (นับอย่างเดียว ไม่ดึงแถว) */
+export async function countAllCases() {
+  const [e, r] = await Promise.all([
+    db().from("ems_cases").select("id", { count: "exact", head: true }),
+    db().from("refer_cases").select("id", { count: "exact", head: true }),
+  ]);
+  return { ems: e.count ?? 0, refer: r.count ?? 0 };
+}
+
+export type DaySummary = {
+  ems: {
+    total: number;
+    byShift: Record<ShiftName | "ไม่ระบุ", number>;
+    trauma: number;
+    nonTrauma: number;
+    severity: Record<string, number>;
+    notFound: number;
+  };
+  refer: { total: number };
+};
+
+/** สรุปของวันเดียว (หน้าหลัก) — ดึงเฉพาะคอลัมน์ที่ต้องนับ */
+export async function getDaySummary(date: string): Promise<DaySummary> {
+  const [emsResult, referResult] = await Promise.all([
+    db()
+      .from("ems_cases")
+      .select("shift, t_received, trauma_type, severity, scene_status")
+      .eq("incident_date", date),
+    db()
+      .from("refer_cases")
+      .select("id", { count: "exact", head: true })
+      .eq("refer_date", date),
+  ]);
+
+  if (emsResult.error)
+    throw new Error(`โหลดสรุปวันนี้ไม่สำเร็จ: ${emsResult.error.message}`);
+
+  const rows = (emsResult.data ?? []) as {
+    shift: string | null;
+    t_received: string | null;
+    trauma_type: string | null;
+    severity: string | null;
+    scene_status: string | null;
+  }[];
+
+  const byShift: DaySummary["ems"]["byShift"] = {
+    เช้า: 0,
+    บ่าย: 0,
+    ดึก: 0,
+    ไม่ระบุ: 0,
+  };
+  const severity: Record<string, number> = {};
+  let trauma = 0;
+  let nonTrauma = 0;
+  let notFound = 0;
+
+  for (const r of rows) {
+    byShift[shiftOf(r.t_received, r.shift) ?? "ไม่ระบุ"]++;
+    if (r.trauma_type === "Trauma") trauma++;
+    if (r.trauma_type === "Non-Trauma") nonTrauma++;
+    if (r.scene_status === "ไม่พบเหตุ") notFound++;
+    if (r.severity) severity[r.severity] = (severity[r.severity] ?? 0) + 1;
+  }
+
+  return {
+    ems: { total: rows.length, byShift, trauma, nonTrauma, severity, notFound },
+    refer: { total: referResult.count ?? 0 },
+  };
 }
 
 export async function getEmsCase(id: string) {

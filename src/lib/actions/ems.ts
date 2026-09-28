@@ -211,7 +211,7 @@ export async function saveEmsCase(
       if (vitalsError) throw new Error(vitalsError.message);
     }
 
-    revalidatePath("/");
+    revalidatePath("/", "layout");
     return {};
   } catch (e) {
     return {
