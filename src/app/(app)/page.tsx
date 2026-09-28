@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { getDaySummary } from "@/lib/data/queries";
+import {
+  getDaySummary,
+  listEmsCases,
+  listReferCases,
+} from "@/lib/data/queries";
 import { thaiLongDate, todayISO } from "@/lib/domain/datetime";
 import { Card } from "@/components/shell/ui";
-import {
-  AmbulanceIcon,
-  ChevronRightIcon,
-  RegistryIcon,
-} from "@/components/shell/icons";
+import { ChevronRightIcon } from "@/components/shell/icons";
+import { EmsCaseCard, ReferCaseCard } from "@/components/cases/CaseCards";
 
 const SHIFT_TILES = [
   { key: "เช้า", short: "ช", range: "08:00–15:59" },
@@ -21,10 +22,14 @@ const TRIAGE = [
   { key: "สีดำ", label: "ดำ", color: "var(--sev-black)" },
 ] as const;
 
-/** หน้าหลัก — ปุ่มเริ่มบันทึก EMS/Refer + สรุปการออกเหตุของวันนี้ */
+/** หน้าหลัก — สรุปการออกเหตุของวันนี้ + รายการเคสวันนี้ (เริ่มบันทึกจากปุ่มกลางแถบล่าง) */
 export default async function HomePage() {
   const today = todayISO();
-  const { ems, refer } = await getDaySummary(today);
+  const [{ ems, refer }, emsCases, referCases] = await Promise.all([
+    getDaySummary(today),
+    listEmsCases(today, today),
+    listReferCases(today, today),
+  ]);
   const white = ems.severity["สีขาว"] ?? 0;
   const noSeverity =
     ems.total - Object.values(ems.severity).reduce((a, b) => a + b, 0);
@@ -38,44 +43,8 @@ export default async function HomePage() {
         </p>
       </div>
 
-      {/* ปุ่มเริ่มบันทึก */}
-      <div className="grid grid-cols-2 gap-3">
-        <Link
-          href="/ems/new"
-          className="flex flex-col items-start gap-3 rounded-2xl bg-linear-135 from-(--navy) to-(--blue-light) p-4 text-white shadow-[0_8px_20px_rgba(10,46,77,.28)] active:scale-[.98]"
-        >
-          <span className="flex size-11 items-center justify-center rounded-xl bg-white/20">
-            <AmbulanceIcon className="size-7" />
-          </span>
-          <span>
-            <span className="block text-[22px] leading-none font-bold">
-              EMS
-            </span>
-            <span className="mt-1 block text-[12px] opacity-90">
-              บันทึกออกเหตุฉุกเฉิน
-            </span>
-          </span>
-        </Link>
-        <Link
-          href="/refer/new"
-          className="flex flex-col items-start gap-3 rounded-2xl border-2 border-(--accent-soft) bg-white p-4 text-(--ink) shadow-(--card-shadow) active:scale-[.98]"
-        >
-          <span className="flex size-11 items-center justify-center rounded-xl bg-(--accent-soft) text-(--accent)">
-            <RegistryIcon className="size-7" />
-          </span>
-          <span>
-            <span className="block text-[22px] leading-none font-bold">
-              Refer
-            </span>
-            <span className="mt-1 block text-[12px] text-(--muted)">
-              บันทึกการส่งต่อผู้ป่วย
-            </span>
-          </span>
-        </Link>
-      </div>
-
       {/* ยอดวันนี้ */}
-      <Card className="mt-4 p-4">
+      <Card className="p-4">
         <div className="flex items-end justify-between gap-3">
           <div>
             <div className="text-[13px] text-(--muted)">วันนี้ออกเหตุ</div>
@@ -189,13 +158,31 @@ export default async function HomePage() {
         )}
       </Card>
 
-      <Link
-        href="/cases"
-        className="mt-3 flex items-center justify-between rounded-2xl bg-white px-4 py-3.5 text-[14px] font-semibold shadow-(--card-shadow)"
-      >
-        ดูรายการเคสวันนี้
-        <ChevronRightIcon className="size-5 text-(--muted)" />
-      </Link>
+      {/* รายการเคสวันนี้ — แสดงเลย ไม่ต้องกดเข้าไปดู */}
+      <div className="mt-6 mb-2 flex items-baseline justify-between gap-2">
+        <h2 className="text-[17px] font-bold">เคสวันนี้</h2>
+        <Link
+          href="/cases"
+          className="flex items-center text-[12.5px] font-medium text-(--accent)"
+        >
+          ดูย้อนหลัง
+          <ChevronRightIcon className="size-4" />
+        </Link>
+      </div>
+      {emsCases.length + referCases.length === 0 ? (
+        <p className="rounded-2xl bg-white py-6 text-center text-[13px] text-(--muted) shadow-(--card-shadow)">
+          วันนี้ยังไม่มีเคส
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {emsCases.map((c) => (
+            <EmsCaseCard key={c.id} c={c} big="seq" />
+          ))}
+          {referCases.map((c) => (
+            <ReferCaseCard key={c.id} c={c} />
+          ))}
+        </ul>
+      )}
     </>
   );
 }
