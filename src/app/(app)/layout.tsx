@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import BackButton from "@/components/shell/BackButton";
 import BottomNav from "@/components/shell/BottomNav";
+import { UserIcon } from "@/components/shell/icons";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const session = await getSession();
@@ -32,9 +33,22 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           </div>
           <Link
             href="/profile"
-            className="shrink-0 rounded-full bg-white/15 px-3 py-1.5 text-[12px] font-medium text-white"
+            className="flex max-w-[45%] min-w-0 shrink-0 items-center gap-1.5 rounded-full bg-white/15 py-1 pr-3 pl-1 text-white"
           >
-            {session.code}
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white/25">
+              <UserIcon className="size-4" />
+            </span>
+            <span className="min-w-0 leading-tight">
+              {/* ชื่อที่ตั้งเอง (ยังไม่ตั้ง = รหัส) + รหัสตัวเล็ก ให้รู้ว่าใครกำลัง login */}
+              <span className="block truncate text-[12.5px] font-semibold">
+                {session.displayName || session.code}
+              </span>
+              {session.displayName && (
+                <span className="block truncate text-[10px] opacity-80">
+                  {session.code}
+                </span>
+              )}
+            </span>
           </Link>
         </div>
       </header>

@@ -10,17 +10,24 @@ function hash(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
-export type Session = { accountId: string; code: string };
+export type Session = {
+  accountId: string;
+  code: string;
+  /** ชื่อที่เจ้าหน้าที่ตั้งเองในหน้าโปรไฟล์ — ยังไม่ตั้ง = null */
+  displayName: string | null;
+};
 
 export async function createSession(accountId: string) {
   const token = randomBytes(32).toString("hex");
   const expires = new Date(Date.now() + DAYS * 24 * 60 * 60 * 1000);
 
-  await db().from("sessions").insert({
-    account_id: accountId,
-    token_hash: hash(token),
-    expires_at: expires.toISOString(),
-  });
+  await db()
+    .from("sessions")
+    .insert({
+      account_id: accountId,
+      token_hash: hash(token),
+      expires_at: expires.toISOString(),
+    });
 
   const jar = await cookies();
   jar.set(COOKIE, token, {
@@ -38,7 +45,9 @@ export async function getSession(): Promise<Session | null> {
 
   const { data } = await db()
     .from("sessions")
-    .select("account_id, expires_at, revoked_at, accounts (code, is_active)")
+    .select(
+      "account_id, expires_at, revoked_at, accounts (code, is_active, display_name)",
+    )
     .eq("token_hash", hash(token))
     .maybeSingle();
 
@@ -48,10 +57,16 @@ export async function getSession(): Promise<Session | null> {
   // supabase-js พิมพ์ relation แบบ join เป็น array เมื่อไม่มี type ที่ generate ไว้
   const account = (
     Array.isArray(data.accounts) ? data.accounts[0] : data.accounts
-  ) as { code: string; is_active: boolean } | undefined;
+  ) as
+    | { code: string; is_active: boolean; display_name: string | null }
+    | undefined;
   if (!account?.is_active) return null;
 
-  return { accountId: data.account_id, code: account.code };
+  return {
+    accountId: data.account_id,
+    code: account.code,
+    displayName: account.display_name,
+  };
 }
 
 export async function destroySession() {

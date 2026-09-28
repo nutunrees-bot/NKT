@@ -3,7 +3,8 @@ import { getSession } from "@/lib/auth/session";
 import { logoutAction } from "@/lib/actions/auth";
 import { getMyProfile } from "@/lib/data/queries";
 import { Card } from "@/components/shell/ui";
-import { LogoutIcon } from "@/components/shell/icons";
+import { LogoutIcon, UserIcon } from "@/components/shell/icons";
+import DisplayNameForm from "@/components/DisplayNameForm";
 import {
   currentMonthISO,
   monthRange,
@@ -30,10 +31,12 @@ export default async function ProfilePage() {
     <>
       <Card className="flex flex-col items-center px-4 pt-6 pb-5 text-center">
         <div className="flex size-20 items-center justify-center rounded-full bg-linear-135 from-(--navy) to-(--blue-light) text-[26px] font-bold text-white shadow-(--card-shadow)">
-          {(me.displayName || me.code).slice(0, 2)}
+          <UserIcon className="size-10" />
         </div>
         <div className="mt-3 text-[20px] font-bold">
-          {me.displayName || me.code}
+          {me.displayName || (
+            <span className="text-(--muted)">ยังไม่ได้ตั้งชื่อ</span>
+          )}
         </div>
         <div className="mt-1 flex items-center gap-1.5 text-[12.5px]">
           <span className="rounded-full bg-(--page-bg) px-2.5 py-0.5 font-medium">
@@ -53,6 +56,10 @@ export default async function ProfilePage() {
           ใช้งานตั้งแต่{" "}
           {thaiDateTime(me.createdAt).replace(/ \d{2}:\d{2}$/, "")}
         </div>
+      </Card>
+
+      <Card className="mt-4 p-4">
+        <DisplayNameForm current={me.displayName} />
       </Card>
 
       {/* เคสที่เจ้าหน้าที่คนนี้เป็นผู้บันทึก */}
