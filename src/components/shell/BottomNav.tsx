@@ -19,7 +19,14 @@ type Tab = {
 };
 
 const TABS: Tab[] = [
-  { href: "/", label: "หน้าหลัก", icon: CrossIcon, match: (p) => p === "/" },
+  {
+    href: "/",
+    label: "หน้าหลัก",
+    icon: CrossIcon,
+    // รายการเคสกับฟอร์ม Refer เข้าจากหน้าหลัก
+    match: (p) =>
+      p === "/" || p.startsWith("/cases") || p.startsWith("/refer"),
+  },
   {
     href: "/registry",
     label: "ทะเบียน",
@@ -27,11 +34,11 @@ const TABS: Tab[] = [
     match: (p) => p.startsWith("/registry"),
   },
   {
-    href: "/cases",
-    label: "รายการเคส",
+    // ปุ่มกลาง = ออกเหตุ เปิดฟอร์ม EMS ใหม่ทันที
+    href: "/ems/new",
+    label: "ออกเหตุ",
     icon: AmbulanceIcon,
-    match: (p) =>
-      p.startsWith("/cases") || p.startsWith("/ems") || p.startsWith("/refer"),
+    match: (p) => p.startsWith("/ems"),
   },
   {
     href: "/area",
