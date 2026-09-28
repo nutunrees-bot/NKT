@@ -7,7 +7,11 @@ import {
   thaiMonthLabel,
 } from "@/lib/domain/datetime";
 import { Card, PageHeader } from "@/components/shell/ui";
-import { ChevronLeftIcon, ChevronRightIcon } from "@/components/shell/icons";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  SheetIcon,
+} from "@/components/shell/icons";
 
 const SEVERITY_COLORS: [string, string, string][] = [
   ["สีแดง", "แดง (วิกฤต)", "#e74c3c"],
@@ -192,6 +196,16 @@ export default async function AreaPage({ searchParams }: PageProps<"/area">) {
           <ChevronRightIcon className="size-5" />
         </Link>
       </div>
+
+      {/* ทะเบียนออกเหตุรายเดือน (ผังเดียวกับชีต EMS69 ที่พิมพ์มือ) ของเดือนที่เลือก */}
+      <a
+        href={`/api/export/ems-month?ym=${ym}`}
+        download
+        className="mb-4 flex items-center justify-center gap-2 rounded-2xl bg-[#1d6f42] px-4 py-3 text-[14.5px] font-semibold text-white shadow-(--card-shadow) active:opacity-90"
+      >
+        <SheetIcon className="size-5" />
+        ดึงทะเบียนรายเดือน (Excel) · {thaiMonthLabel(ym)}
+      </a>
 
       <Panel title="จำนวนเหตุแยกตามตำบล">
         {lookups.subdistricts.map((area) => (

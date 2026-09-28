@@ -97,3 +97,31 @@ export function shiftMonth(ym: string, delta: number): string {
 export function hm(time: string | null | undefined): string {
   return time ? time.slice(0, 5) : "";
 }
+
+const THAI_MONTHS_SHORT = [
+  "ม.ค.",
+  "ก.พ.",
+  "มี.ค.",
+  "เม.ย.",
+  "พ.ค.",
+  "มิ.ย.",
+  "ก.ค.",
+  "ส.ค.",
+  "ก.ย.",
+  "ต.ค.",
+  "พ.ย.",
+  "ธ.ค.",
+];
+
+/** "2026-09" -> "ก.ย.69" (ชื่อแท็บรายเดือนในชีตทะเบียน EMS ของ ER) */
+export function thaiMonthShort(ym: string): string {
+  const [y, m] = ym.split("-").map(Number);
+  return `${THAI_MONTHS_SHORT[m - 1]}${String(y + 543).slice(-2)}`;
+}
+
+/** "2026-09" -> ["2026-09-01", "2026-09-30"] */
+export function monthRange(ym: string): [string, string] {
+  const [y, m] = ym.split("-").map(Number);
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return [`${ym}-01`, `${ym}-${String(last).padStart(2, "0")}`];
+}

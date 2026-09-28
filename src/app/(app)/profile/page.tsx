@@ -9,7 +9,9 @@ import {
   PinIcon,
   PrinterIcon,
   RegistryIcon,
+  SheetIcon,
 } from "@/components/shell/icons";
+import { currentMonthISO, thaiMonthLabel } from "@/lib/domain/datetime";
 
 /** โปรไฟล์ — รหัสเจ้าหน้าที่ที่เข้าระบบอยู่ + ลิงก์ที่เคยอยู่แถบบน + ออกจากระบบ */
 export default async function ProfilePage() {
@@ -19,6 +21,14 @@ export default async function ProfilePage() {
   const links = [
     { href: "/area", label: "สรุป EMS & REFER รายเดือน", icon: PinIcon, blank: false },
     { href: "/registry", label: "ค้นทะเบียนผู้ป่วย", icon: RegistryIcon, blank: false },
+    {
+      // ไฟล์ดาวน์โหลด (route handler) — ใช้ <a> ธรรมดา ไม่ใช่ <Link>
+      href: `/api/export/ems-month?ym=${currentMonthISO()}`,
+      label: `ดึงทะเบียนรายเดือน (Excel) · ${thaiMonthLabel(currentMonthISO())}`,
+      icon: SheetIcon,
+      blank: false,
+      download: true,
+    },
     { href: "/print/als/blank", label: "พิมพ์ฟอร์ม ALS เปล่า", icon: PrinterIcon, blank: true },
   ];
 
@@ -42,19 +52,32 @@ export default async function ProfilePage() {
         <ul className="divide-y divide-(--line)">
           {links.map((l) => {
             const Icon = l.icon;
+            const rowClass =
+              "flex items-center gap-3 px-4 py-3.5 text-[14px] active:bg-(--page-bg)";
+            const inner = (
+              <>
+                <span className="flex size-9 items-center justify-center rounded-xl bg-(--accent-soft) text-(--accent)">
+                  <Icon className="size-5" />
+                </span>
+                <span className="flex-1 font-medium">{l.label}</span>
+                <ChevronRightIcon className="size-5 text-(--muted)" />
+              </>
+            );
             return (
               <li key={l.href}>
-                <Link
-                  href={l.href}
-                  target={l.blank ? "_blank" : undefined}
-                  className="flex items-center gap-3 px-4 py-3.5 text-[14px] active:bg-(--page-bg)"
-                >
-                  <span className="flex size-9 items-center justify-center rounded-xl bg-(--accent-soft) text-(--accent)">
-                    <Icon className="size-5" />
-                  </span>
-                  <span className="flex-1 font-medium">{l.label}</span>
-                  <ChevronRightIcon className="size-5 text-(--muted)" />
-                </Link>
+                {"download" in l ? (
+                  <a href={l.href} download className={rowClass}>
+                    {inner}
+                  </a>
+                ) : (
+                  <Link
+                    href={l.href}
+                    target={l.blank ? "_blank" : undefined}
+                    className={rowClass}
+                  >
+                    {inner}
+                  </Link>
+                )}
               </li>
             );
           })}

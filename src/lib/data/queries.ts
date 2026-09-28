@@ -340,3 +340,40 @@ export async function getMonthlySummary(ym: string): Promise<MonthlySummary> {
     },
   };
 }
+
+export type EmsRegisterRow = {
+  incident_date: string;
+  seq_no: number;
+  op_no: string | null;
+  shift: string | null;
+  staff_provider1: string | null;
+  staff_provider2: string | null;
+  received_from: string | null;
+  incident_type: string | null;
+  scene_status: string | null;
+  t_received: string | null;
+  t_depart_station: string | null;
+  t_arrive_scene: string | null;
+  response_time_min: number | null;
+  mile_out: number | null;
+  mile_scene: number | null;
+  patient_name: string | null;
+  patient_hn: string | null;
+  patient_age: number | null;
+};
+
+/** เคส EMS ทั้งเดือน สำหรับทะเบียนรายเดือน (Excel) — เรียงวันที่ แล้วเหตุที่ */
+export async function listEmsRegister(from: string, to: string) {
+  const { data, error } = await db()
+    .from("ems_cases")
+    .select(
+      "incident_date, seq_no, op_no, shift, staff_provider1, staff_provider2, received_from, incident_type, scene_status, t_received, t_depart_station, t_arrive_scene, response_time_min, mile_out, mile_scene, patient_name, patient_hn, patient_age",
+    )
+    .gte("incident_date", from)
+    .lte("incident_date", to)
+    .order("incident_date", { ascending: true })
+    .order("seq_no", { ascending: true });
+
+  if (error) throw new Error(`โหลดทะเบียน EMS ไม่สำเร็จ: ${error.message}`);
+  return (data ?? []) as unknown as EmsRegisterRow[];
+}
