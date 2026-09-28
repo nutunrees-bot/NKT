@@ -130,22 +130,3 @@ export function monthRange(ym: string): [string, string] {
   const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
   return [`${ym}-01`, `${ym}-${String(last).padStart(2, "0")}`];
 }
-
-/** timestamptz -> "28 ก.ย. 2569 18:20" ตามเวลาไทย */
-export function thaiDateTime(ts: string | null | undefined): string {
-  if (!ts) return "-";
-  const d = new Date(ts);
-  const date = new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
-    timeZone: TZ,
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(d);
-  const time = new Intl.DateTimeFormat("en-GB", {
-    timeZone: TZ,
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(d);
-  return `${date} ${time}`;
-}
