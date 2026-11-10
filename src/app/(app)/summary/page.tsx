@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { RegistryIcon, SheetIcon } from "@/components/shell/icons";
 import { getLookups, getMonthlySummary } from "@/lib/data/queries";
 import { currentMonthISO, thaiMonthLabel } from "@/lib/domain/datetime";
 import { PageHeader } from "@/components/shell/ui";
@@ -28,6 +30,25 @@ export default async function SummaryPage({ searchParams }: PageProps<"/summary"
       <PageHeader title="สรุป EMS & REFER" subtitle={thaiMonthLabel(ym)} />
 
       <MonthPicker path="/summary" ym={ym} />
+
+      {/* ทะเบียนออกเหตุรายเดือน (ผังเดียวกับชีต EMS69 ที่พิมพ์มือ) ของเดือนที่เลือก */}
+      <div className="mb-4 grid gap-2 lg:grid-cols-2">
+        <Link
+          href={`/register?ym=${ym}`}
+          className="flex items-center justify-center gap-2 rounded-2xl border-2 border-(--accent) bg-white px-4 py-3 text-[14.5px] font-semibold text-(--accent) shadow-(--card-shadow) active:opacity-90"
+        >
+          <RegistryIcon className="size-5" />
+          ดูตารางทะเบียนออกเหตุ · {thaiMonthLabel(ym)}
+        </Link>
+        <a
+          href={`/api/export/ems-month?ym=${ym}`}
+          download
+          className="flex items-center justify-center gap-2 rounded-2xl bg-[#1d6f42] px-4 py-3 text-[14.5px] font-semibold text-white shadow-(--card-shadow) active:opacity-90"
+        >
+          <SheetIcon className="size-5" />
+          ดึงทะเบียนรายเดือน (Excel) · {thaiMonthLabel(ym)}
+        </a>
+      </div>
 
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi value={ems.total} label="ออกเหตุ EMS ทั้งหมด" color="var(--accent)" />

@@ -1,14 +1,12 @@
-import Link from "next/link";
 import AreaMap from "@/components/summary/AreaMap";
 import { Bar, MonthPicker, Panel } from "@/components/summary/charts";
 import { getLookups, getMonthlySummary } from "@/lib/data/queries";
 import { currentMonthISO, thaiMonthLabel } from "@/lib/domain/datetime";
 import { PageHeader } from "@/components/shell/ui";
-import { RegistryIcon, SheetIcon } from "@/components/shell/icons";
 
 /**
- * พื้นที่ (แท็บหมุด) — เหตุแยกตามตำบลรายเดือน + ทะเบียนรายเดือน
- * สรุป EMS & REFER แยกไปอยู่หน้า /summary (เข้าจากปุ่มในหน้าโปรไฟล์)
+ * พื้นที่ (แท็บหมุด) — เหตุแยกตามตำบลรายเดือน + แผนผังพื้นที่
+ * สรุป EMS & REFER + ทะเบียนรายเดือน/Excel อยู่หน้า /summary (เข้าจากปุ่มในหน้าโปรไฟล์)
  */
 export default async function AreaPage({ searchParams }: PageProps<"/area">) {
   const sp = await searchParams;
@@ -40,23 +38,6 @@ export default async function AreaPage({ searchParams }: PageProps<"/area">) {
       />
 
       <MonthPicker path="/area" ym={ym} />
-
-      {/* ทะเบียนออกเหตุรายเดือน (ผังเดียวกับชีต EMS69 ที่พิมพ์มือ) ของเดือนที่เลือก */}
-      <Link
-        href={`/register?ym=${ym}`}
-        className="mb-2 flex items-center justify-center gap-2 rounded-2xl border-2 border-(--accent) bg-white px-4 py-3 text-[14.5px] font-semibold text-(--accent) shadow-(--card-shadow) active:opacity-90"
-      >
-        <RegistryIcon className="size-5" />
-        ดูตารางทะเบียนออกเหตุ · {thaiMonthLabel(ym)}
-      </Link>
-      <a
-        href={`/api/export/ems-month?ym=${ym}`}
-        download
-        className="mb-4 flex items-center justify-center gap-2 rounded-2xl bg-[#1d6f42] px-4 py-3 text-[14.5px] font-semibold text-white shadow-(--card-shadow) active:opacity-90"
-      >
-        <SheetIcon className="size-5" />
-        ดึงทะเบียนรายเดือน (Excel) · {thaiMonthLabel(ym)}
-      </a>
 
       {/* บนคอมเรียงแผงเป็น 2 คอลัมน์ · มือถือเรียงลงมาแถวเดียวเหมือนเดิม */}
       <div className="lg:grid lg:grid-cols-2 lg:gap-x-4">
