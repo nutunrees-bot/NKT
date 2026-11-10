@@ -41,7 +41,8 @@ export default async function RegisterPage({
   const found = rows.filter((r) => !isNotFound(r)).length;
 
   return (
-    <>
+    // page-wide: เต็มจอบนคอม (globals.css) · มือถือคงเดิม — ตารางกว้าง เห็นคอลัมน์ได้มากขึ้น
+    <div className="page-wide">
       <PageHeader
         title="ทะเบียนออกเหตุ"
         subtitle={`${thaiMonthLabel(ym)} · ${rows.length} เหตุ (พบเหตุ ${found})`}
@@ -173,6 +174,6 @@ export default async function RegisterPage({
       <p className="mt-2 text-center text-[11px] text-(--muted)">
         เลื่อนตารางซ้าย-ขวาเพื่อดูคอลัมน์ทั้งหมด
       </p>
-    </>
+    </div>
   );
 }
