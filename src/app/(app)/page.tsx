@@ -10,16 +10,17 @@ import { ChevronRightIcon } from "@/components/shell/icons";
 import { EmsCaseCard, ReferCaseCard } from "@/components/cases/CaseCards";
 
 const SHIFT_TILES = [
-  { key: "เช้า", short: "ช", range: "08:00–15:59" },
-  { key: "บ่าย", short: "บ", range: "16:00–23:59" },
-  { key: "ดึก", short: "ด", range: "00:00–07:59" },
+  { key: "เช้า", short: "ช", range: "08:30–16:30" },
+  { key: "บ่าย", short: "บ", range: "16:30–00:30" },
+  { key: "ดึก", short: "ด", range: "00:30–08:30" },
 ] as const;
 
+// กรอบเต็มสีของตัวเอง — เหลืองพื้นสว่าง ใช้ตัวอักษรเข้มให้อ่านออก
 const TRIAGE = [
-  { key: "สีแดง", label: "แดง", color: "var(--sev-red)" },
-  { key: "สีเหลือง", label: "เหลือง", color: "var(--sev-yellow)" },
-  { key: "สีเขียว", label: "เขียว", color: "var(--sev-green)" },
-  { key: "สีดำ", label: "ดำ", color: "var(--sev-black)" },
+  { key: "สีแดง", label: "แดง", color: "var(--sev-red)", ink: "#fff" },
+  { key: "สีเหลือง", label: "เหลือง", color: "var(--sev-yellow)", ink: "#5c4400" },
+  { key: "สีเขียว", label: "เขียว", color: "var(--sev-green)", ink: "#fff" },
+  { key: "สีดำ", label: "ดำ", color: "var(--sev-black)", ink: "#fff" },
 ] as const;
 
 /** หน้าหลัก — สรุปการออกเหตุของวันนี้ + รายการเคสวันนี้ (เริ่มบันทึกจากปุ่มกลางแถบล่าง) */
@@ -35,7 +36,8 @@ export default async function HomePage() {
     ems.total - Object.values(ems.severity).reduce((a, b) => a + b, 0);
 
   return (
-    <>
+    // page-wide: เต็มจอบนคอม (globals.css) · มือถือคงเดิม
+    <div className="page-wide">
       <div className="mb-4">
         <h1 className="text-[24px] leading-tight font-bold">หน้าหลัก</h1>
         <p className="mt-0.5 text-[13px] text-(--muted)">
@@ -134,16 +136,13 @@ export default async function HomePage() {
           {TRIAGE.map((t) => (
             <div
               key={t.key}
-              className="flex flex-col items-center rounded-xl bg-(--page-bg) py-2.5"
+              className="flex flex-col items-center rounded-xl py-3"
+              style={{ background: t.color, color: t.ink }}
             >
-              <span
-                className="size-3.5 rounded-full ring-2 ring-white"
-                style={{ background: t.color }}
-              />
-              <span className="mt-1.5 text-[22px] leading-none font-bold">
+              <span className="text-[22px] leading-none font-bold">
                 {ems.severity[t.key] ?? 0}
               </span>
-              <span className="mt-1 text-[11.5px] text-(--muted)">
+              <span className="mt-1 text-[11.5px] font-semibold opacity-90">
                 {t.label}
               </span>
             </div>
@@ -174,7 +173,7 @@ export default async function HomePage() {
           วันนี้ยังไม่มีเคส
         </p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
           {emsCases.map((c) => (
             <EmsCaseCard key={c.id} c={c} big="seq" />
           ))}
@@ -183,6 +182,6 @@ export default async function HomePage() {
           ))}
         </ul>
       )}
-    </>
+    </div>
   );
 }

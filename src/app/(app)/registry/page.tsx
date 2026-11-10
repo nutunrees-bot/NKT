@@ -31,7 +31,8 @@ export default async function RegistryPage({ searchParams }: PageProps<"/registr
   const nothing = (!showEms || ems.length === 0) && (!showRefer || refer.length === 0);
 
   return (
-    <>
+    // page-wide: บนจอคอม (>= 1024px) ขยายหน้านี้เต็มจอ — ดู globals.css · มือถือคงเดิม
+    <div className="page-wide">
       <PageHeader
         title="ทะเบียนผู้ป่วย"
         subtitle={`เคสที่บันทึกในระบบ EMS ${totals.ems.toLocaleString("th-TH")} · Refer ${totals.refer.toLocaleString("th-TH")} ราย`}
@@ -79,7 +80,7 @@ export default async function RegistryPage({ searchParams }: PageProps<"/registr
           ไม่พบข้อมูลผู้ป่วย
         </p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
           {/* รวม EMS + Refer เรียงวันที่ล่าสุดก่อน */}
           {[
             ...(showEms ? ems.map((c) => ({ date: c.incident_date, ems: c })) : []),
@@ -95,6 +96,6 @@ export default async function RegistryPage({ searchParams }: PageProps<"/registr
             )}
         </ul>
       )}
-    </>
+    </div>
   );
 }

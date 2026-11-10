@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { logoutAction } from "@/lib/actions/auth";
@@ -10,7 +11,8 @@ export default async function ProfilePage() {
   if (!session) redirect("/login");
 
   return (
-    <>
+    // page-wide: เต็มจอบนคอม (globals.css) · มือถือคงเดิม
+    <div className="page-wide">
       <Card className="flex flex-col items-center px-4 pt-6 pb-5 text-center">
         <div className="flex size-20 items-center justify-center rounded-full bg-linear-135 from-(--navy) to-(--blue-light) text-white shadow-(--card-shadow)">
           <UserIcon className="size-10" />
@@ -28,7 +30,28 @@ export default async function ProfilePage() {
         </div>
       </Card>
 
-      <form action={logoutAction} className="mt-4">
+      <Link
+        href="/ambulance"
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-(--accent) bg-white py-3.5 text-[15px] font-semibold text-(--accent) shadow-(--card-shadow) active:opacity-90"
+      >
+        🚑 Ambulance
+      </Link>
+
+      <Link
+        href="/equipment"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-(--accent) bg-white py-3.5 text-[15px] font-semibold text-(--accent) shadow-(--card-shadow) active:opacity-90"
+      >
+        🧰 อุปกรณ์ EMS
+      </Link>
+
+      <Link
+        href="/summary"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-(--accent) py-3.5 text-[15px] font-semibold text-white shadow-(--card-shadow) active:opacity-90"
+      >
+        📊 สรุป EMS &amp; REFER
+      </Link>
+
+      <form action={logoutAction} className="mt-3">
         <button
           type="submit"
           className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#f6cfcb] bg-(--danger-soft) py-3.5 text-[15px] font-semibold text-(--danger)"
@@ -36,6 +59,6 @@ export default async function ProfilePage() {
           <LogoutIcon className="size-5" /> ออกจากระบบ
         </button>
       </form>
-    </>
+    </div>
   );
 }

@@ -44,16 +44,18 @@ const TABS: Tab[] = [
     href: "/area",
     label: "พื้นที่",
     icon: PinIcon,
-    match: (p) =>
-      p.startsWith("/area") ||
-      p.startsWith("/summary") ||
-      p.startsWith("/register"),
+    match: (p) => p.startsWith("/area") || p.startsWith("/register"),
   },
   {
     href: "/profile",
     label: "โปรไฟล์",
     icon: UserIcon,
-    match: (p) => p.startsWith("/profile"),
+    // Ambulance, อุปกรณ์ EMS และสรุป EMS & REFER เข้าจากปุ่มในโปรไฟล์
+    match: (p) =>
+      p.startsWith("/profile") ||
+      p.startsWith("/summary") ||
+      p.startsWith("/ambulance") ||
+      p.startsWith("/equipment"),
   },
 ];
 

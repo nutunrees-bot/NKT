@@ -61,6 +61,15 @@ textarea {
   font-size: 16px;
 }
 
+/* หน้าที่ใส่ .page-wide (เช่น ทะเบียน) ขยายเต็มจอบนคอม — มือถือ/แท็บเล็ตแนวตั้งยังกว้าง 640px เหมือนเดิม */
+@media (min-width: 1024px) {
+  main:has(> .page-wide),
+  body:has(.page-wide) header > div {
+    max-width: none;
+    padding-inline: 2rem;
+  }
+}
+
 /* แถวชิปกรองเลื่อนแนวนอนได้ แต่ไม่ต้องโชว์ scrollbar */
 .no-scrollbar {
   scrollbar-width: none;

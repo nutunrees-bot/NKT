@@ -58,18 +58,18 @@ export function thaiDate(iso: string | null | undefined): string {
 export type ShiftName = "เช้า" | "บ่าย" | "ดึก";
 
 /**
- * เวรของเหตุ — ดูจากเวลารับแจ้งก่อน (เช้า 08:00–15:59, บ่าย 16:00–23:59,
- * ดึก 00:00–07:59) ถ้าไม่ได้กรอกเวลาค่อยใช้ช่อง "เวร" ที่เจ้าหน้าที่เลือกไว้
+ * เวรของเหตุ — ดูจากเวลารับแจ้งก่อน (เช้า 08:30–16:29, บ่าย 16:30–00:29
+ * ข้ามเที่ยงคืน, ดึก 00:30–08:29) ถ้าไม่ได้กรอกเวลาค่อยใช้ช่อง "เวร" ที่เจ้าหน้าที่เลือกไว้
  */
 export function shiftOf(
   time: string | null | undefined,
   storedShift?: string | null,
 ): ShiftName | null {
-  const m = time ? /^(\d{1,2}):/.exec(time) : null;
+  const m = time ? /^(\d{1,2}):(\d{2})/.exec(time) : null;
   if (m) {
-    const h = Number(m[1]);
-    if (h >= 8 && h < 16) return "เช้า";
-    if (h >= 16) return "บ่าย";
+    const mins = Number(m[1]) * 60 + Number(m[2]);
+    if (mins >= 8 * 60 + 30 && mins < 16 * 60 + 30) return "เช้า";
+    if (mins >= 16 * 60 + 30 || mins < 30) return "บ่าย";
     return "ดึก";
   }
   if (storedShift === "เช้า" || storedShift === "บ่าย" || storedShift === "ดึก")
@@ -96,6 +96,12 @@ export function shiftMonth(ym: string, delta: number): string {
   const [y, m] = ym.split("-").map(Number);
   const total = y * 12 + (m - 1) + delta;
   return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, "0")}`;
+}
+
+/** "2026-11-10", 30 -> "2026-10-11" (คิดแบบ UTC เที่ยงวัน ไม่เลื่อนวัน) */
+export function daysBefore(iso: string, n: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d - n, 12)).toISOString().slice(0, 10);
 }
 
 /** "14:05:00" -> "14:05" */
