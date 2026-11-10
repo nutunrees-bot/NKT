@@ -32,7 +32,8 @@ export default function LoginForm() {
             setCode(next);
             if (!touchedPassword) setPassword(next);
           }}
-          maxLength={8}
+          // ERNKT001 = 8 ตัว · บัญชี พขร. DRNKT123456 = 11 ตัว
+          maxLength={16}
           autoCapitalize="characters"
           autoComplete="username"
           className="w-full rounded-lg border border-(--line) bg-white px-3 py-2.5 text-center tracking-widest"

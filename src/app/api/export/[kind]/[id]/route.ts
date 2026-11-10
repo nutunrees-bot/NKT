@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getSession } from "@/lib/auth/session";
+import { getStaffSession } from "@/lib/auth/session";
 import { getEmsCase, getReferCase } from "@/lib/data/queries";
 import { emsCaseWorkbook, referCaseWorkbook } from "@/lib/export/case-xlsx";
 
@@ -10,7 +10,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * ข้อมูลผู้ป่วยทั้งเคส ต้องล็อกอินก่อนเสมอ (ยิงลิงก์ตรงได้ ไม่ได้ผ่านหน้าจอ)
  */
 export async function GET(_req: NextRequest, ctx: RouteContext<"/api/export/[kind]/[id]">) {
-  if (!(await getSession())) {
+  if (!(await getStaffSession())) {
     return NextResponse.json({ error: "ต้องเข้าสู่ระบบก่อน" }, { status: 401 });
   }
 

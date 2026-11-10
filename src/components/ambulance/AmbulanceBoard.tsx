@@ -36,12 +36,15 @@ export default function AmbulanceBoard({
   recentChecks,
   today,
   currentShift,
+  canManage,
 }: {
   ambulances: Ambulance[];
   checkItems: CheckItem[];
   recentChecks: AmbulanceCheck[];
   today: string;
   currentShift: string;
+  /** เจ้าหน้าที่ = true · พขร. = false (ซ่อนเพิ่ม/เอารถออก และแก้รายการของ) */
+  canManage: boolean;
 }) {
   // รถที่กางใบเช็คของอยู่ (ทีละคัน) + วัน/เวรของใบเช็ค
   const [openCarId, setOpenCarId] = useState<string | null>(null);
@@ -68,6 +71,7 @@ export default function AmbulanceBoard({
         <Box title="รถพยาบาล · สถานะ">
           <Fleet
             ambulances={ambulances}
+            canManage={canManage}
             openCarId={openCarId}
             onToggleCheck={(id) => (openCarId === id ? setOpenCarId(null) : openCheck(id))}
             renderCheck={(car) => (
@@ -111,7 +115,9 @@ export default function AmbulanceBoard({
           />
         </Box>
 
-        <ItemManager checkItems={checkItems} categories={VEHICLE_CATEGORIES} />
+        {canManage && (
+          <ItemManager checkItems={checkItems} categories={VEHICLE_CATEGORIES} />
+        )}
       </div>
     </div>
   );
@@ -119,11 +125,13 @@ export default function AmbulanceBoard({
 
 function Fleet({
   ambulances,
+  canManage,
   openCarId,
   onToggleCheck,
   renderCheck,
 }: {
   ambulances: Ambulance[];
+  canManage: boolean;
   openCarId: string | null;
   onToggleCheck: (id: string) => void;
   renderCheck: (car: Ambulance) => React.ReactNode;
@@ -149,18 +157,20 @@ function Fleet({
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[17px] font-bold">🚑 {a.plate}</span>
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => {
-                    if (!confirm(`เอารถ ${a.plate} ออกจากรายการ? (ประวัติการเช็คยังอยู่)`))
-                      return;
-                    call(() => removeAmbulance(a.id));
-                  }}
-                  className="text-[12px] text-(--danger) disabled:opacity-50"
-                >
-                  เอาออก
-                </button>
+                {canManage && (
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => {
+                      if (!confirm(`เอารถ ${a.plate} ออกจากรายการ? (ประวัติการเช็คยังอยู่)`))
+                        return;
+                      call(() => removeAmbulance(a.id));
+                    }}
+                    className="text-[12px] text-(--danger) disabled:opacity-50"
+                  >
+                    เอาออก
+                  </button>
+                )}
               </div>
 
               {/* สถานะ (เลื่อนเลือก) | ปุ่มเช็คของ */}
@@ -206,6 +216,7 @@ function Fleet({
         })}
       </ul>
 
+      {canManage && (
       <form
         className="mt-3 flex gap-2"
         onSubmit={(e) => {
@@ -227,6 +238,7 @@ function Fleet({
           เพิ่มรถ
         </button>
       </form>
+      )}
     </>
   );
 }

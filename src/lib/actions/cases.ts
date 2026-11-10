@@ -2,14 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/supabase/admin";
-import { getSession } from "@/lib/auth/session";
+import { getStaffSession } from "@/lib/auth/session";
 
 /**
  * Server action ถูกยิงตรงด้วย POST ได้ ไม่ใช่แค่ผ่านหน้าจอ —
  * ทุกตัวจึงต้องเช็ก session เองเสมอ
  */
 async function requireSession() {
-  const session = await getSession();
+  const session = await getStaffSession();
   if (!session) throw new Error("หมดเวลาเข้าระบบ กรุณาเข้าสู่ระบบใหม่");
   return session;
 }

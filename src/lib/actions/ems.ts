@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/supabase/admin";
-import { getSession } from "@/lib/auth/session";
+import { getStaffSession } from "@/lib/auth/session";
 import { MULTI_KEYS } from "@/lib/domain/options";
 import type { EmsFormValues, VitalSet } from "@/lib/domain/ems";
 import { ATTACHMENT_BUCKET } from "@/lib/storage";
@@ -152,7 +152,7 @@ export async function saveEmsCase(
   values: EmsFormValues,
   caseId?: string,
 ): Promise<{ error?: string }> {
-  const session = await getSession();
+  const session = await getStaffSession();
   if (!session) return { error: "หมดเวลาเข้าระบบ กรุณาเข้าสู่ระบบใหม่" };
 
   if (!values.incident_date) return { error: "กรุณาเลือกวันที่" };

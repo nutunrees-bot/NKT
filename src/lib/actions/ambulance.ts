@@ -16,9 +16,18 @@ type Result = { error?: string };
 const PAGES = ["/ambulance", "/equipment"];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-async function run(fn: (accountId: string) => Promise<void>): Promise<Result> {
+/**
+ * who: "any" = ทั้งเจ้าหน้าที่และ พขร. (เปลี่ยนสถานะรถ, เช็คของในรถ)
+ *      "staff" = เฉพาะเจ้าหน้าที่ ER (เพิ่ม/เอารถออก, แก้รายการของ, ใบอุปกรณ์ EMS)
+ */
+async function run(
+  fn: (accountId: string) => Promise<void>,
+  who: "any" | "staff" = "staff",
+): Promise<Result> {
   const session = await getSession();
   if (!session) return { error: "หมดเวลาเข้าระบบ กรุณาเข้าสู่ระบบใหม่" };
+  if (who === "staff" && session.role !== "staff")
+    return { error: "บัญชี พขร. ทำรายการนี้ไม่ได้" };
   try {
     await fn(session.accountId);
     for (const p of PAGES) revalidatePath(p);
@@ -80,7 +89,7 @@ export async function setAmbulanceStatus(id: string, status: string) {
       })
       .eq("id", id);
     check(error, "เปลี่ยนสถานะรถ");
-  });
+  }, "any");
 }
 
 export async function saveAmbulanceCheck(input: {
@@ -102,7 +111,7 @@ export async function saveAmbulanceCheck(input: {
         { onConflict: "ambulance_id,check_date,shift" },
       );
     check(error, "บันทึกการเช็คของ");
-  });
+  }, "any");
 }
 
 /** ใบตรวจอุปกรณ์ EMS — วันละ 1 ใบต่อเวร ไม่ผูกกับรถ */

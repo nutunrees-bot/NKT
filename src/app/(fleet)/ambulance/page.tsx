@@ -1,10 +1,19 @@
+import { redirect } from "next/navigation";
 import { getAmbulanceData } from "@/lib/data/ambulance";
+import { getSession } from "@/lib/auth/session";
 import { daysBefore, nowHM, shiftOf, todayISO } from "@/lib/domain/datetime";
 import { PageHeader } from "@/components/shell/ui";
 import AmbulanceBoard from "@/components/ambulance/AmbulanceBoard";
 
-/** Ambulance — ทะเบียนรถ + สถานะ + เช็คของภายในรถรายวันแยกเวร (เข้าจากปุ่มในโปรไฟล์) */
+/**
+ * Ambulance — ทะเบียนรถ + สถานะ + เช็คของภายในรถรายวันแยกเวร
+ * เจ้าหน้าที่เข้าจากปุ่มในโปรไฟล์ · พขร. เข้าระบบแล้วมาหน้านี้หน้าเดียว
+ * (พขร. เปลี่ยนสถานะ/เช็คของได้ แต่เพิ่ม-เอารถออก/แก้รายการของไม่ได้)
+ */
 export default async function AmbulancePage() {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const canManage = session.role === "staff";
   const today = todayISO();
   const currentShift = shiftOf(nowHM()) ?? "เช้า";
 
@@ -33,7 +42,12 @@ export default async function AmbulancePage() {
     // page-wide: เต็มจอบนคอม (globals.css) · มือถือคงเดิม
     <div className="page-wide">
       <PageHeader title="Ambulance" subtitle="สถานะรถพยาบาล · เช็คของภายในรถรายวันแยกเวร" />
-      <AmbulanceBoard {...data} today={today} currentShift={currentShift} />
+      <AmbulanceBoard
+        {...data}
+        today={today}
+        currentShift={currentShift}
+        canManage={canManage}
+      />
     </div>
   );
 }

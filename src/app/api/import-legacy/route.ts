@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth/session";
+import { getStaffSession } from "@/lib/auth/session";
 import {
   importLegacySheet,
   probeSheet,
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "ไม่พบเส้นทางนี้" }, { status: 404 });
   }
 
-  if (!(await getSession())) {
+  if (!(await getStaffSession())) {
     return NextResponse.json({ error: "ต้องเข้าสู่ระบบก่อน" }, { status: 401 });
   }
 

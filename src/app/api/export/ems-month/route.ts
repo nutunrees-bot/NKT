@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getSession } from "@/lib/auth/session";
+import { getStaffSession } from "@/lib/auth/session";
 import { listEmsRegister } from "@/lib/data/queries";
 import { monthRange, thaiMonthShort } from "@/lib/domain/datetime";
 import { emsMonthlyRegisterWorkbook } from "@/lib/export/register-xlsx";
@@ -9,7 +9,7 @@ import { emsMonthlyRegisterWorkbook } from "@/lib/export/register-xlsx";
  * (ym เป็น ค.ศ. แบบเดียวกับหน้า /area) · ข้อมูลผู้ป่วย ต้องล็อกอินก่อนเสมอ
  */
 export async function GET(req: NextRequest) {
-  if (!(await getSession())) {
+  if (!(await getStaffSession())) {
     return NextResponse.json({ error: "ต้องเข้าสู่ระบบก่อน" }, { status: 401 });
   }
 

@@ -15,6 +15,10 @@ ER โรงพยาบาลสมเด็จพระยุพราชน�
   `db()` จาก `src/lib/supabase/admin.ts` (service_role)
   ห้าม import ไฟล์นั้นจากไฟล์ที่มี `"use client"`
 - **server action ทุกตัวต้องเช็ก session เอง** — ยิง POST ตรงเข้ามาได้ ไม่ได้ผ่านหน้าจอเสมอ
+- **บัญชีมี 2 role** (`accounts.role`): `staff` (ERNKT) เข้าได้ทุกหน้า · `driver` (พขร. บัญชีกลาง DRNKT123456)
+  เข้าได้แค่ `/ambulance` (กลุ่ม `(fleet)`) — layout กลุ่ม `(app)` ส่ง driver ไป `/ambulance`
+  action/API ที่แตะข้อมูลผู้ป่วยใช้ `getStaffSession()` ไม่ใช่ `getSession()`
+  หน้าใหม่ที่ พขร. ห้ามเห็น → ใส่ในกลุ่ม `(app)` เท่านั้น
 - **ค่าที่ผู้ใช้เลือกได้ต้องตรงกับ check constraint** ใน `supabase/v2/0001_init.sql`
   ตัวเลือกทั้งหมดอยู่ที่ `src/lib/domain/options.ts` ที่เดียว แก้ทั้งสองที่ให้ตรงกัน
 - **เวลาไทยเสมอ** — เซิร์ฟเวอร์รันเป็น UTC ใช้ helper ใน `src/lib/domain/datetime.ts`

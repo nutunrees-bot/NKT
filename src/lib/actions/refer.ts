@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/supabase/admin";
-import { getSession } from "@/lib/auth/session";
+import { getStaffSession } from "@/lib/auth/session";
 import type { ReferFormValues } from "@/lib/domain/refer";
 
 const txt = (v: string) => (v.trim() === "" ? null : v.trim());
@@ -15,7 +15,7 @@ export async function saveReferCase(
   values: ReferFormValues,
   caseId?: string,
 ): Promise<{ error?: string }> {
-  const session = await getSession();
+  const session = await getStaffSession();
   if (!session) return { error: "หมดเวลาเข้าระบบ กรุณาเข้าสู่ระบบใหม่" };
   if (!values.refer_date) return { error: "กรุณาเลือกวันที่" };
 
