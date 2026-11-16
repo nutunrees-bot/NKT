@@ -147,23 +147,6 @@ const EMS_SECTIONS: [string, Field[]][] = [
   ],
 ];
 
-const REFER_SECTIONS: [string, Field[]][] = [
-  [
-    "ข้อมูลการส่งต่อ",
-    [
-      ["วันที่", (r) => thaiDate(r.refer_date as string)],
-      ["ชื่อ-สกุล", v("patient_name")],
-      ["HN", v("patient_hn")],
-      ["อายุ", v("patient_age")],
-      ["Dx", v("dx")],
-      ["ส่งต่อโรงพยาบาล", v("refer_hospital")],
-      ["ประเภท", v("trauma_type")],
-      ["ทีมนำส่ง", v("team")],
-      ["ระดับความรุนแรง", v("severity")],
-    ],
-  ],
-];
-
 function styleHeader(row: ExcelJS.Row) {
   row.font = { bold: true, color: { argb: "FFFFFFFF" } };
   row.eachCell((c) => {
@@ -242,18 +225,5 @@ export async function emsCaseWorkbook(row: Row): Promise<Buffer> {
     }
   }
 
-  return Buffer.from(await wb.xlsx.writeBuffer());
-}
-
-export async function referCaseWorkbook(row: Row): Promise<Buffer> {
-  const wb = new ExcelJS.Workbook();
-  wb.creator = "NKT Rescue";
-  addKeyValueSheet(
-    wb,
-    "REFER",
-    `เคส REFER วันที่ ${thaiDate(row.refer_date as string)}`,
-    REFER_SECTIONS,
-    row,
-  );
   return Buffer.from(await wb.xlsx.writeBuffer());
 }

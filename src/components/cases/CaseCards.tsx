@@ -1,7 +1,7 @@
 import Link from "next/link";
 import DeleteCaseButton from "@/components/DeleteCaseButton";
-import { deleteEmsCase, deleteReferCase } from "@/lib/actions/cases";
-import type { EmsListItem, ReferListItem } from "@/lib/data/queries";
+import { deleteEmsCase } from "@/lib/actions/cases";
+import type { EmsListItem } from "@/lib/data/queries";
 import { hm, thaiDate } from "@/lib/domain/datetime";
 import {
   CaseCard,
@@ -81,62 +81,6 @@ export function EmsCaseCard({
         <a
           key="x"
           href={`/api/export/ems/${c.id}`}
-          download
-          className={`${cardActionClass} text-[#2e7d32]`}
-        >
-          <SheetIcon className="size-4" /> Excel
-        </a>,
-      ]}
-    />
-  );
-}
-
-export function ReferCaseCard({
-  c,
-  big = "age",
-}: {
-  c: ReferListItem;
-  big?: "age" | "none";
-}) {
-  const sev = severityShort(c.severity);
-  return (
-    <CaseCard
-      sevColor={severityColor(c.severity)}
-      title={c.patient_name || "(ไม่ระบุชื่อ)"}
-      meta={metaLine([
-        c.patient_hn && `HN ${c.patient_hn}`,
-        c.patient_age !== null && `${c.patient_age} ปี`,
-      ])}
-      tags={
-        <>
-          <Tag tone="blue">Refer</Tag>
-          <Tag>{thaiDate(c.refer_date)}</Tag>
-          {sev && <Tag>{sev}</Tag>}
-          {c.trauma_type && <Tag tone="blue">{c.trauma_type}</Tag>}
-          {c.refer_hospital && <Tag tone="green">→ {c.refer_hospital}</Tag>}
-          <Tag>ผู้บันทึก {accountCode(c)}</Tag>
-        </>
-      }
-      big={big === "age" ? (c.patient_age ?? "-") : undefined}
-      bigLabel={big === "age" ? "ปี" : undefined}
-      corner={
-        <DeleteCaseButton id={c.id} action={deleteReferCase} className={deleteClass} />
-      }
-      actions={[
-        <Link key="e" href={`/refer/${c.id}`} className={cardActionClass}>
-          <PencilIcon className="size-4" /> แก้ไข
-        </Link>,
-        <Link
-          key="p"
-          href={`/print/refer/${c.id}`}
-          target="_blank"
-          className={cardActionClass}
-        >
-          <PrinterIcon className="size-4" /> พิมพ์ Refer
-        </Link>,
-        <a
-          key="x"
-          href={`/api/export/refer/${c.id}`}
           download
           className={`${cardActionClass} text-[#2e7d32]`}
         >

@@ -1,13 +1,9 @@
 import Link from "next/link";
-import {
-  getDaySummary,
-  listEmsCases,
-  listReferCases,
-} from "@/lib/data/queries";
+import { getDaySummary, listEmsCases } from "@/lib/data/queries";
 import { thaiLongDate, todayISO } from "@/lib/domain/datetime";
 import { Card } from "@/components/shell/ui";
 import { ChevronRightIcon } from "@/components/shell/icons";
-import { EmsCaseCard, ReferCaseCard } from "@/components/cases/CaseCards";
+import { EmsCaseCard } from "@/components/cases/CaseCards";
 
 const SHIFT_TILES = [
   { key: "เช้า", short: "ช", range: "08:30–16:30" },
@@ -26,10 +22,9 @@ const TRIAGE = [
 /** หน้าหลัก — สรุปการออกเหตุของวันนี้ + รายการเคสวันนี้ (เริ่มบันทึกจากปุ่มกลางแถบล่าง) */
 export default async function HomePage() {
   const today = todayISO();
-  const [{ ems, refer }, emsCases, referCases] = await Promise.all([
+  const [{ ems }, emsCases] = await Promise.all([
     getDaySummary(today),
     listEmsCases(today, today),
-    listReferCases(today, today),
   ]);
   const white = ems.severity["สีขาว"] ?? 0;
   const noSeverity =
@@ -47,27 +42,19 @@ export default async function HomePage() {
 
       {/* ยอดวันนี้ */}
       <Card className="p-4">
-        <div className="flex items-end justify-between gap-3">
-          <div>
-            <div className="text-[13px] text-(--muted)">วันนี้ออกเหตุ</div>
-            <div className="mt-1 flex items-baseline gap-1.5">
-              <span className="text-[40px] leading-none font-bold text-(--accent)">
-                {ems.total}
-              </span>
-              <span className="text-[14px] text-(--muted)">ครั้ง</span>
-            </div>
-            {ems.notFound > 0 && (
-              <div className="mt-1 text-[12px] text-(--muted)">
-                (ไม่พบเหตุ {ems.notFound})
-              </div>
-            )}
+        <div>
+          <div className="text-[13px] text-(--muted)">วันนี้ออกเหตุ</div>
+          <div className="mt-1 flex items-baseline gap-1.5">
+            <span className="text-[40px] leading-none font-bold text-(--accent)">
+              {ems.total}
+            </span>
+            <span className="text-[14px] text-(--muted)">ครั้ง</span>
           </div>
-          <div className="text-right">
-            <div className="text-[13px] text-(--muted)">Refer วันนี้</div>
-            <div className="mt-1 text-[28px] leading-none font-bold">
-              {refer.total}
+          {ems.notFound > 0 && (
+            <div className="mt-1 text-[12px] text-(--muted)">
+              (ไม่พบเหตุ {ems.notFound})
             </div>
-          </div>
+          )}
         </div>
 
         {/* เวร ช/บ/ด */}
@@ -168,7 +155,7 @@ export default async function HomePage() {
           <ChevronRightIcon className="size-4" />
         </Link>
       </div>
-      {emsCases.length + referCases.length === 0 ? (
+      {emsCases.length === 0 ? (
         <p className="rounded-2xl bg-white py-6 text-center text-[13px] text-(--muted) shadow-(--card-shadow)">
           วันนี้ยังไม่มีเคส
         </p>
@@ -176,9 +163,6 @@ export default async function HomePage() {
         <ul className="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
           {emsCases.map((c) => (
             <EmsCaseCard key={c.id} c={c} big="seq" />
-          ))}
-          {referCases.map((c) => (
-            <ReferCaseCard key={c.id} c={c} />
           ))}
         </ul>
       )}

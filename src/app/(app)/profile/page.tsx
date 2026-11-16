@@ -48,7 +48,7 @@ export default async function ProfilePage() {
         href="/summary"
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-(--accent) py-3.5 text-[15px] font-semibold text-white shadow-(--card-shadow) active:opacity-90"
       >
-        📊 สรุป EMS &amp; REFER
+        📊 สรุป EMS
       </Link>
 
       <form action={logoutAction} className="mt-3">

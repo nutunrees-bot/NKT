@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/shell/ui";
 
 /**
  * พื้นที่ (แท็บหมุด) — เหตุแยกตามตำบลรายเดือน + แผนผังพื้นที่
- * สรุป EMS & REFER + ทะเบียนรายเดือน/Excel อยู่หน้า /summary (เข้าจากปุ่มในหน้าโปรไฟล์)
+ * สรุป EMS + ทะเบียนรายเดือน/Excel อยู่หน้า /summary (เข้าจากปุ่มในหน้าโปรไฟล์)
  */
 export default async function AreaPage({ searchParams }: PageProps<"/area">) {
   const sp = await searchParams;

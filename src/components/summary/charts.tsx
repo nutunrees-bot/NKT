@@ -3,7 +3,7 @@ import { shiftMonth } from "@/lib/domain/datetime";
 import { Card } from "@/components/shell/ui";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/shell/icons";
 
-/** ชิ้นส่วนกราฟที่หน้า "พื้นที่" และหน้า "สรุป EMS & REFER" ใช้ร่วมกัน */
+/** ชิ้นส่วนกราฟที่หน้า "พื้นที่" และหน้า "สรุป EMS" ใช้ร่วมกัน */
 
 export const SEVERITY_COLORS: [string, string, string][] = [
   ["สีแดง", "แดง (วิกฤต)", "#e74c3c"],

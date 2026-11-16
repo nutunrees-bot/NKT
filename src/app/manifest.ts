@@ -6,10 +6,10 @@ import type { MetadataRoute } from "next";
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "NKT Rescue — บันทึก EMS และการส่งต่อผู้ป่วย",
+    name: "NKT Rescue — บันทึกออกเหตุ EMS",
     short_name: "NKT Rescue",
     description:
-      "ระบบบันทึกปฏิบัติการการแพทย์ฉุกเฉินและการส่งต่อผู้ป่วย ER โรงพยาบาลสมเด็จพระยุพราชนครไทย",
+      "ระบบบันทึกปฏิบัติการการแพทย์ฉุกเฉิน ER โรงพยาบาลสมเด็จพระยุพราชนครไทย",
     lang: "th",
     start_url: "/",
     display: "standalone",

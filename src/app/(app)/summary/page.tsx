@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { RegistryIcon, SheetIcon } from "@/components/shell/icons";
-import { getLookups, getMonthlySummary } from "@/lib/data/queries";
+import { getMonthlySummary } from "@/lib/data/queries";
 import { currentMonthISO, thaiMonthLabel } from "@/lib/domain/datetime";
 import { PageHeader } from "@/components/shell/ui";
 import {
@@ -12,22 +12,18 @@ import {
   SEVERITY_COLORS,
 } from "@/components/summary/charts";
 
-/** สรุป EMS & REFER รายเดือน — เข้าจากปุ่มในหน้าโปรไฟล์ */
+/** สรุป EMS รายเดือน + ตารางทะเบียน/Excel — เข้าจากปุ่มในหน้าโปรไฟล์ */
 export default async function SummaryPage({ searchParams }: PageProps<"/summary">) {
   const sp = await searchParams;
   const raw = Array.isArray(sp.ym) ? sp.ym[0] : sp.ym;
   const ym = raw && /^\d{4}-\d{2}$/.test(raw) ? raw : currentMonthISO();
 
-  const [{ ems, refer }, lookups] = await Promise.all([
-    getMonthlySummary(ym),
-    getLookups(),
-  ]);
-  const hospitalMax = Math.max(1, ...Object.values(refer.byHospital));
+  const { ems } = await getMonthlySummary(ym);
 
   return (
     // page-wide: เต็มจอบนคอม (globals.css) · มือถือคงเดิม
     <div className="page-wide">
-      <PageHeader title="สรุป EMS & REFER" subtitle={thaiMonthLabel(ym)} />
+      <PageHeader title="สรุป EMS" subtitle={thaiMonthLabel(ym)} />
 
       <MonthPicker path="/summary" ym={ym} />
 
@@ -50,11 +46,10 @@ export default async function SummaryPage({ searchParams }: PageProps<"/summary"
         </a>
       </div>
 
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-3 gap-3">
         <Kpi value={ems.total} label="ออกเหตุ EMS ทั้งหมด" color="var(--accent)" />
         <Kpi value={ems.found} label="พบเหตุ" color="#2e7d32" />
         <Kpi value={ems.notFound} label="ไม่พบเหตุ" color="#b8590f" />
-        <Kpi value={refer.total} label="ส่งต่อ (REFER) ทั้งหมด" color="#1d5f99" />
       </div>
 
       {/* บนคอมเรียงแผงเป็น 2 คอลัมน์ · มือถือเรียงลงมาแถวเดียว */}
@@ -69,21 +64,6 @@ export default async function SummaryPage({ searchParams }: PageProps<"/summary"
           />
         </Panel>
 
-        <Panel title="ประเภทเหตุ (REFER)">
-          <Bar
-            label="Trauma"
-            count={refer.trauma}
-            max={refer.total || 1}
-            color="#e74c3c"
-          />
-          <Bar
-            label="Non-Trauma"
-            count={refer.nonTrauma}
-            max={refer.total || 1}
-            color="#3498db"
-          />
-        </Panel>
-
         <Panel title="ระดับความรุนแรง (RC Code)">
           <Donut
             total={ems.total}
@@ -93,18 +73,6 @@ export default async function SummaryPage({ searchParams }: PageProps<"/summary"
               count: ems.severity[key] ?? 0,
             }))}
           />
-        </Panel>
-
-        <Panel title="REFER แยกตามโรงพยาบาลที่ส่งต่อ">
-          {lookups.hospitals.map((h) => (
-            <Bar
-              key={h}
-              label={h}
-              count={refer.byHospital[h] ?? 0}
-              max={hospitalMax}
-              color="#1d5f99"
-            />
-          ))}
         </Panel>
       </div>
 
