@@ -16,6 +16,8 @@ const num = (v: string) => {
   const n = Number.parseFloat(v);
   return Number.isNaN(n) ? null : n;
 };
+/** DTX = ตัวเลข หรือ LOW / HI (เครื่องวัดขึ้นค่าเกินช่วง) — เก็บเป็นข้อความ ตัวพิมพ์ใหญ่ */
+const dtx = (v: string) => txt(v.toUpperCase().slice(0, 10));
 
 /**
  * ลายเซ็น/รูปถ่ายมาเป็น data URL เฉพาะตอนที่เพิ่งวาด/ถ่ายใหม่
@@ -62,7 +64,7 @@ function vitalRow(v: VitalSet, caseId: string, index: number) {
     gcs_m: int(v.gcs_m),
     pupil_l: txt(v.pupil_l),
     pupil_r: txt(v.pupil_r),
-    dtx: int(v.dtx),
+    dtx: dtx(v.dtx),
   };
 }
 
@@ -126,7 +128,7 @@ function baseRow(f: EmsFormValues) {
     gcs_m: int(f.gcs_m),
     pupil_l: txt(f.pupil_l),
     pupil_r: txt(f.pupil_r),
-    dtx: int(f.dtx),
+    dtx: dtx(f.dtx),
     treatment: txt(f.treatment),
 
     ...multi,

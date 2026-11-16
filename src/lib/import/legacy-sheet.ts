@@ -393,7 +393,7 @@ async function importEmsTab(
       gcs_m: gcs(c(42), 6, "GCS M", dropped),
       pupil_l: txt(c(44)),
       pupil_r: txt(c(79)),
-      dtx: int(c(45)),
+      dtx: txt(c(45)), // DTX เก็บเป็นข้อความ (ตัวเลข หรือ LOW / HI)
       treatment: txt(c(46)),
 
       wound: list(c(51)),
@@ -493,7 +493,7 @@ async function importEmsTab(
             gcs_m: int(v.gcsM),
             pupil_l: txt(v.pupilL),
             pupil_r: txt(v.pupilR),
-            dtx: int(v.dtx),
+            dtx: txt(v.dtx),
           })),
         );
     }

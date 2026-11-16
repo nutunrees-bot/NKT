@@ -612,14 +612,8 @@ export default function EmsForm({
             />
           </Field>
         </div>
-        <Field label="DTX (mg%)">
-          <input
-            type="number"
-            inputMode="numeric"
-            value={values.dtx}
-            onChange={(e) => set("dtx", e.target.value)}
-            className={inputClass}
-          />
+        <Field label="DTX (mg%)" hint="พิมพ์ตัวเลข หรือกด LOW / HI เมื่อเครื่องวัดขึ้นค่าเกินช่วง">
+          <DtxInput value={values.dtx} onChange={(v) => set("dtx", v)} />
         </Field>
         <Field label="Treatment">
           <textarea
@@ -665,26 +659,32 @@ export default function EmsForm({
                   ["gcs_m", "GCS M", "number"],
                   ["pupil_l", "Pupil ซ้าย", "text"],
                   ["pupil_r", "Pupil ขวา", "text"],
-                  ["dtx", "DTX", "number"],
+                  ["dtx", "DTX", "text"],
                 ] as const
-              ).map(([key, label, type]) => (
-                <Field key={key} label={label}>
-                  <input
-                    type={type}
-                    step={key === "bt" ? "0.1" : undefined}
-                    value={vs[key]}
-                    onChange={(e) =>
-                      set(
-                        "vitals",
-                        values.vitals.map((row, idx) =>
-                          idx === i ? { ...row, [key]: e.target.value } : row,
-                        ),
-                      )
-                    }
-                    className={inputClass}
-                  />
-                </Field>
-              ))}
+              ).map(([key, label, type]) => {
+                const setVital = (value: string) =>
+                  set(
+                    "vitals",
+                    values.vitals.map((row, idx) =>
+                      idx === i ? { ...row, [key]: value } : row,
+                    ),
+                  );
+                return (
+                  <Field key={key} label={label}>
+                    {key === "dtx" ? (
+                      <DtxInput value={vs.dtx} onChange={setVital} />
+                    ) : (
+                      <input
+                        type={type}
+                        step={key === "bt" ? "0.1" : undefined}
+                        value={vs[key]}
+                        onChange={(e) => setVital(e.target.value)}
+                        className={inputClass}
+                      />
+                    )}
+                  </Field>
+                );
+              })}
             </div>
           </div>
         ))}
@@ -847,5 +847,46 @@ export default function EmsForm({
             : "บันทึกข้อมูล EMS"}
       </button>
     </>
+  );
+}
+
+/**
+ * DTX: พิมพ์ตัวเลข หรือกด LOW / HI (เครื่องวัดขึ้นค่าเกินช่วงเป็นตัวอักษร)
+ * ช่องเป็น text (ช่อง number พิมพ์ตัวอักษรไม่ได้) · กดปุ่มเดิมซ้ำ = ล้างค่า
+ */
+function DtxInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex gap-1.5">
+      <input
+        type="text"
+        inputMode="text"
+        autoCapitalize="characters"
+        maxLength={10}
+        placeholder="เช่น 120"
+        value={value}
+        onChange={(e) => onChange(e.target.value.toUpperCase())}
+        className={`${inputClass} min-w-0`}
+      />
+      {(["LOW", "HI"] as const).map((v) => (
+        <button
+          key={v}
+          type="button"
+          onClick={() => onChange(value === v ? "" : v)}
+          className={`shrink-0 rounded-lg border-2 px-2.5 text-[12.5px] font-semibold ${
+            value === v
+              ? "border-(--accent) bg-(--accent) text-white"
+              : "border-(--line) bg-white text-(--muted)"
+          }`}
+        >
+          {v}
+        </button>
+      ))}
+    </div>
   );
 }
