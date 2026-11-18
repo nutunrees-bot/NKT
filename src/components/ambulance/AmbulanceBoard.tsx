@@ -66,16 +66,19 @@ export default function AmbulanceBoard({
   };
 
   return (
-    <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-4">
+    <div>
       <div>
-        <Box title="รถพยาบาล · สถานะ">
+        <h2 className="mb-2 text-[13px] font-semibold text-(--muted)">
+          รถพยาบาล · สถานะ
+        </h2>
+        <div className="mb-4">
           <Fleet
             ambulances={ambulances}
             canManage={canManage}
             openCarId={openCarId}
             onToggleCheck={(id) => (openCarId === id ? setOpenCarId(null) : openCheck(id))}
             renderCheck={(car) => (
-              <div className="mt-3 rounded-xl border border-(--line) bg-white p-3">
+              <div className="border-t border-(--line) bg-white p-3">
                 <h3 className="mb-2 text-[14px] font-bold text-(--blue)">
                   เช็คของภายในรถ (รายวัน แยกเวร)
                 </h3>
@@ -102,7 +105,7 @@ export default function AmbulanceBoard({
               </div>
             )}
           />
-        </Box>
+        </div>
       </div>
 
       <div>
@@ -149,14 +152,31 @@ function Fleet({
           const color = statusColor(a.status);
           const open = openCarId === a.id;
           return (
+            // การ์ดแบบเดียวกับหน้าทะเบียนผู้ป่วย: ขอบซ้ายสีสถานะ + แถวปุ่มท้ายการ์ด
             <li
               key={a.id}
               id={`car-${a.id}`}
-              className="scroll-mt-20 rounded-xl border-l-4 bg-(--page-bg) p-3"
+              className="scroll-mt-20 overflow-hidden rounded-2xl border-l-[5px] bg-(--card) shadow-(--card-shadow)"
               style={{ borderLeftColor: color }}
             >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[17px] font-bold">🚑 {a.plate}</span>
+              <div className="flex gap-3 px-4 pt-3.5 pb-3">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[15.5px] font-bold text-(--ink)">
+                    🚑 {a.plate}
+                  </div>
+                  <div className="mt-0.5 truncate text-[12.5px] text-(--muted)">
+                    อัปเดต {thaiDateTime(a.statusUpdatedAt)}
+                    {a.statusUpdatedBy ? ` · ${a.statusUpdatedBy}` : ""}
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <span
+                      className="inline-flex items-center rounded-full px-2 py-0.5 text-[11.5px] font-semibold text-white"
+                      style={{ background: color }}
+                    >
+                      {a.status}
+                    </span>
+                  </div>
+                </div>
                 {canManage && (
                   <button
                     type="button"
@@ -166,17 +186,22 @@ function Fleet({
                         return;
                       call(() => removeAmbulance(a.id));
                     }}
-                    className="text-[12px] text-(--danger) disabled:opacity-50"
+                    className="self-start rounded-md px-1.5 py-0.5 text-[11.5px] text-(--muted) hover:text-(--danger) disabled:opacity-50"
                   >
                     เอาออก
                   </button>
                 )}
               </div>
 
-              {/* สถานะ (เลื่อนเลือก) | ปุ่มเช็คของ */}
-              <div className="mt-2 flex gap-2">
-                <label className="min-w-0 flex-1">
+              {/* แถวปุ่มท้ายการ์ด: เปลี่ยนสถานะ (เลื่อนเลือก) | เช็คของ */}
+              <div className="flex divide-x divide-(--line) border-t border-(--line) text-(--ink)">
+                <label className="flex flex-1 items-center justify-center gap-1.5 py-1 active:bg-(--page-bg)">
                   <span className="sr-only">สถานะรถ {a.plate}</span>
+                  <span
+                    className="size-2.5 shrink-0 rounded-full"
+                    style={{ background: color }}
+                    aria-hidden
+                  />
                   <select
                     value={a.status}
                     disabled={pending}
@@ -184,11 +209,10 @@ function Fleet({
                       const next = e.target.value;
                       call(() => setAmbulanceStatus(a.id, next));
                     }}
-                    className="w-full rounded-lg border-2 px-2.5 py-2.5 text-[14px] font-semibold text-white disabled:opacity-60"
-                    style={{ background: color, borderColor: color }}
+                    className="min-w-0 bg-transparent py-1.5 text-[13px] font-semibold disabled:opacity-60"
                   >
                     {AMBULANCE_STATUSES.map((s) => (
-                      <option key={s.value} value={s.value} className="bg-white text-(--ink)">
+                      <option key={s.value} value={s.value}>
                         {s.value}
                       </option>
                     ))}
@@ -198,16 +222,12 @@ function Fleet({
                   type="button"
                   onClick={() => onToggleCheck(a.id)}
                   aria-expanded={open}
-                  className={`shrink-0 rounded-lg border-2 border-(--accent) px-3.5 text-[14px] font-semibold ${
-                    open ? "bg-(--accent) text-white" : "bg-white text-(--accent)"
+                  className={`flex flex-1 items-center justify-center gap-1.5 py-2.5 text-[13px] font-semibold ${
+                    open ? "bg-(--accent) text-white" : "text-(--accent) active:bg-(--page-bg)"
                   }`}
                 >
                   📋 เช็คของ {open ? "▲" : "▼"}
                 </button>
-              </div>
-              <div className="mt-1.5 text-[11.5px] text-(--muted)">
-                สถานะอัปเดต {thaiDateTime(a.statusUpdatedAt)}
-                {a.statusUpdatedBy ? ` โดย ${a.statusUpdatedBy}` : ""}
               </div>
 
               {open && renderCheck(a)}

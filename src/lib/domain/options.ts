@@ -9,6 +9,7 @@ export const SHIFTS = ["เช้า", "บ่าย", "ดึก"] as const;
 /** สถานะรถพยาบาล — ตรงกับ check constraint ใน supabase/v2/0004_ambulance.sql */
 export const AMBULANCE_STATUSES = [
   { value: "พร้อมใช้งาน", color: "#2e7d32" },
+  { value: "ไม่พร้อมใช้งาน", color: "#e53935" },
   { value: "ซ่อม", color: "#c62828" },
   { value: "ไปราชการ", color: "#b8590f" },
   { value: "ไป Refer", color: "#1d5f99" },

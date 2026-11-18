@@ -16,6 +16,7 @@ const TRIAGE = [
   { key: "สีแดง", label: "แดง", color: "var(--sev-red)", ink: "#fff" },
   { key: "สีเหลือง", label: "เหลือง", color: "var(--sev-yellow)", ink: "#5c4400" },
   { key: "สีเขียว", label: "เขียว", color: "var(--sev-green)", ink: "#fff" },
+  { key: "สีขาว", label: "ขาว", color: "var(--sev-white)", ink: "#333" },
   { key: "สีดำ", label: "ดำ", color: "var(--sev-black)", ink: "#fff" },
 ] as const;
 
@@ -26,7 +27,6 @@ export default async function HomePage() {
     getDaySummary(today),
     listEmsCases(today, today),
   ]);
-  const white = ems.severity["สีขาว"] ?? 0;
   const noSeverity =
     ems.total - Object.values(ems.severity).reduce((a, b) => a + b, 0);
 
@@ -61,7 +61,7 @@ export default async function HomePage() {
         <h2 className="mt-5 mb-2 text-[13px] font-semibold text-(--muted)">
           แยกตามเวร
         </h2>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2 lg:max-w-xl">
           {SHIFT_TILES.map((s) => (
             <div key={s.key} className="rounded-xl bg-(--page-bg) px-3 py-2.5">
               <div className="flex items-center gap-1.5 text-[13px] font-semibold">
@@ -119,11 +119,11 @@ export default async function HomePage() {
         <h2 className="mt-5 mb-2 text-[13px] font-semibold text-(--muted)">
           ระดับความรุนแรง (สีคัดแยก)
         </h2>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-5 gap-2 lg:max-w-2xl">
           {TRIAGE.map((t) => (
             <div
               key={t.key}
-              className="flex flex-col items-center rounded-xl py-3"
+              className="flex flex-col items-center rounded-xl border border-black/10 py-3"
               style={{ background: t.color, color: t.ink }}
             >
               <span className="text-[22px] leading-none font-bold">
@@ -135,11 +135,9 @@ export default async function HomePage() {
             </div>
           ))}
         </div>
-        {(white > 0 || noSeverity > 0) && (
+        {noSeverity > 0 && (
           <p className="mt-1.5 text-[11.5px] text-(--muted)">
-            {white > 0 && `สีขาว ${white} เคส`}
-            {white > 0 && noSeverity > 0 && " · "}
-            {noSeverity > 0 && `ไม่ระบุสี ${noSeverity} เคส`}
+            ไม่ระบุสี {noSeverity} เคส
           </p>
         )}
       </Card>

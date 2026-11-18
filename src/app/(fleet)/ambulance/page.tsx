@@ -23,7 +23,7 @@ export default async function AmbulancePage() {
   } catch (e) {
     // ยังไม่ได้รัน supabase/v2/0004_ambulance.sql = ยังไม่มีตาราง
     return (
-      <div className="page-wide">
+      <div>
         <PageHeader title="Ambulance" />
         <p className="rounded-2xl bg-white p-5 text-[13.5px] shadow-(--card-shadow)">
           โหลดข้อมูลรถพยาบาลไม่สำเร็จ — ถ้าเพิ่งเปิดใช้ ให้ผู้ดูแลรัน
@@ -39,8 +39,7 @@ export default async function AmbulancePage() {
   }
 
   return (
-    // page-wide: เต็มจอบนคอม (globals.css) · มือถือคงเดิม
-    <div className="page-wide">
+    <div>
       <PageHeader title="Ambulance" subtitle="สถานะรถพยาบาล · เช็คของภายในรถรายวันแยกเวร" />
       <AmbulanceBoard
         {...data}
